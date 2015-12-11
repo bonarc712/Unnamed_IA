@@ -51,7 +51,7 @@ public class Car extends Agent {
 	private Queue<String> crossCars;
 	private HashMap<String, Boolean> crossCarStatus;
 	
-	private boolean printingTurn = false;
+	private boolean printingTurn = true; // Print lot of messages
 	private String printings = new String();
 	
 	
@@ -409,7 +409,8 @@ public class Car extends Agent {
 		ImageIcon car = new ImageIcon(Const.RESOURCES_DIR+"/"+Const.CAR_COLOR[carColor]);
 		String networkId = this.getNetworkID();
 		String carId = networkId.substring(0, networkId.indexOf("@"));
-		icone = new RotateLabel(car, carId);
+		//icone = new RotateLabel(car, carId);
+		icone = new RotateLabel(car, carId+","+Integer.toString(position));
    		icone.setBounds(0,0,Const.CAR_SIZE, Const.CAR_SIZE);
    		icone.setLocation(pos.x, pos.y);
    		icone.setAngle(pos.getAngle());

@@ -85,7 +85,7 @@ public class CarPath {
 					} 
 					else { // if we move on x
 						// if no needs to rotate
-						if(nextP.x + distance < p.x && nextP.orientation ==Math.PI/2) {
+						if(nextP.x + distance < p.x && nextP.orientation == Math.PI/2) {
 							nextP = new OrientedPoint(nextP);
 							nextP.x =  (int) (nextP.x + distance);
 							distance = 0;
