@@ -49,7 +49,15 @@ public class Functions {
 	}
 	
 	public static int manhattan(OrientedPoint a, OrientedPoint b) {
-		return (Math.abs(a.x-b.x)+ Math.abs(a.y-b.y));
+		/*int dist = 0;
+		if(a != null && b != null)
+			dist = Math.abs(a.x-b.x)+ Math.abs(a.y-b.y);
+		return dist;*/
+		return Math.abs(a.x-b.x)+ Math.abs(a.y-b.y);
+	}
+	
+	public static String getCarId(String address) {
+		return address.substring(0, address.indexOf("-"));
 	}
 
 	public static boolean sEloigne(OrientedPoint other, OrientedPoint we) {
