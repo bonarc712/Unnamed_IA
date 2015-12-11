@@ -11,6 +11,7 @@ import java.util.Set;
 //import java.util.function.Function;
 
 import javax.swing.ImageIcon;
+import javax.swing.JLabel;
 
 import madkit.kernel.Agent;
 import madkit.kernel.Message;
@@ -406,7 +407,9 @@ public class Car extends Agent {
 		/* Car representation */
 		carColor = (int) (Math.random() * Const.CAR_COLOR.length);
 		ImageIcon car = new ImageIcon(Const.RESOURCES_DIR+"/"+Const.CAR_COLOR[carColor]);
-		icone = new RotateLabel(car);
+		String networkId = this.getNetworkID();
+		String carId = networkId.substring(0, networkId.indexOf("@"));
+		icone = new RotateLabel(car, carId);
    		icone.setBounds(0,0,Const.CAR_SIZE, Const.CAR_SIZE);
    		icone.setLocation(pos.x, pos.y);
    		icone.setAngle(pos.getAngle());

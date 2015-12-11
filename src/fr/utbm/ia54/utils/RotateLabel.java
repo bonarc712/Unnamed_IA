@@ -1,5 +1,6 @@
 package fr.utbm.ia54.utils;
 
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
@@ -18,17 +19,22 @@ public class RotateLabel extends JLabel {
 	private static final long serialVersionUID = 1L;
 	
 	private double angle = 0;
-	private double centerX;
-	private double centerY;
+	private int centerX;
+	private int centerY;
 	
 	private ImageIcon icon;
 	private ImageIcon iconSave;
 	private BufferedImage iconBuff;
 	
-    public RotateLabel(ImageIcon icon) {
+	private String carId;
+	
+    public RotateLabel(ImageIcon icon, String carId) {
     	
-        super(icon);
-        // keep that reference close by
+        //super(icon);
+    	
+    	this.carId = carId;
+
+    	// keep that reference close by
         this.icon=icon;
         // create a save of it in it's original form (lost of data with angles who aren't 0,90,180,270
         this.iconSave = new ImageIcon();
@@ -53,7 +59,7 @@ public class RotateLabel extends JLabel {
         	if(this.angle == Math.PI*2) {
         		this.angle = 0;
         	}
-	    	BufferedImage imgTemp =  new BufferedImage((int)centerX, (int)centerY, BufferedImage.TYPE_INT_RGB);
+	    	BufferedImage imgTemp =  new BufferedImage((int) centerX, (int) centerY, BufferedImage.TYPE_INT_RGB);
 	    	Graphics g2 = imgTemp.createGraphics();
 	    	icon.paintIcon(null, g2, 0,0);
 	    	g2.dispose();
@@ -63,7 +69,27 @@ public class RotateLabel extends JLabel {
         	angle=0;
         	AffineTransformOp transformOp = new AffineTransformOp(transform, AffineTransformOp.TYPE_BILINEAR);
         	icon.setImage(transformOp.filter(iconBuff,null));
+        	
+        	
         }
+
+        
+        // Car background and id
+    	g.setColor(new Color(0, 0, 0));
+        g.drawRect(0, 0, centerX*2-1, centerY*2-1);
+        
+        g.setColor(new Color(230, 230, 230));        
+        g.fillRect(0, 0, centerX*2-1, centerY*2-1);
+        
+    	g.setColor(new Color(0, 0, 0));
+        g.drawRect(0, 0, centerX*2-1, centerY*2-1);
+
+    	g.setColor(new Color(0, 0, 0));
+    	g.drawString(carId, 5, centerY*2-5);
+    	
+        // Car Icon
+        g.drawImage(icon.getImage(), centerX, 0, centerX, centerY, null);
+    	    	
     	super.paintComponent(g);
     }
 
