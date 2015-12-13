@@ -57,7 +57,10 @@ public class Functions {
 	}
 	
 	public static String getCarId(String address) {
-		return address.substring(0, address.indexOf("-"));
+		if(address.contains("-")){
+			return address.substring(0, address.indexOf("-"));
+		}
+		return address.substring(0, address.indexOf("@"));
 	}
 
 	public static boolean sEloigne(OrientedPoint other, OrientedPoint we) {
