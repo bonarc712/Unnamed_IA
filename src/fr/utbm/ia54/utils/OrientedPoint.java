@@ -5,7 +5,7 @@ import java.awt.Point;
 /**
  * 
  * @author Florian & Alexis
- * Manages a point witch is oriented.
+ * Manages a point which is oriented.
  * the orientation is given in radiant (0 is facing north)
  */
 public class OrientedPoint extends Point {

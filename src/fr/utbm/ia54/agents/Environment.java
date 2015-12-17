@@ -7,6 +7,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import javax.swing.JFrame;
+
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
+
 import fr.utbm.ia54.consts.Const;
 import fr.utbm.ia54.gui.Menu;
 import fr.utbm.ia54.main.MainProgram;
@@ -19,13 +28,6 @@ import madkit.kernel.Message;
 import madkit.message.ObjectMessage;
 import madkit.message.StringMessage;
 
-import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartPanel;
-import org.jfree.chart.JFreeChart;
-import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.data.xy.XYSeries;
-import org.jfree.data.xy.XYSeriesCollection;
-
 /**
  * @author Alexis Florian
  * This agent control every car's trajectory and warn cars about collisions.
@@ -36,7 +38,7 @@ public class Environment extends Agent{
 	private static List<List<String>> carsId; // List of car's networkId (one list by train)
 	private Integer beaconRange;
 	private Menu menu;
-	private Frame frame;
+	private JFrame frame;
 
 	/**
 	 * This is the first activated behavior in the life cycle of a MaDKit agent.
@@ -82,7 +84,7 @@ public class Environment extends Agent{
 		List<XYSeriesCollection> seriesSpeed = new ArrayList<XYSeriesCollection>();
 		
 		
-		frame = new Frame("Simulation Stats");
+		frame = new JFrame("Simulation Stats");
 		frame.setLayout(new GridLayout(2, 0));
 
 		for (int i = 0 ; i < carsId.size(); i++) {
@@ -134,6 +136,8 @@ public class Environment extends Agent{
 		
 		frame.pack();
 		frame.setVisible(false);
+		frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+		
 		
 		/*Here we simulate the environment with beaconised's crossings
 		  When a train's first car enter it's range, we send a message to the train (upcoming crossing).
@@ -312,7 +316,8 @@ public class Environment extends Agent{
 	}
 	
 	/**
-	 * Does the car 
+	 * Has the car passed the cross?
+	 * The car size is added into the calculation.
 	 * @param car
 	 * @param cross
 	 * @return

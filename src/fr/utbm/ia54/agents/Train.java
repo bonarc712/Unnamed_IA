@@ -267,7 +267,6 @@ public class Train extends Agent {
 		}
 	}
 	
-	
 	private void changeCarBehavior(StringMessage data) {
 		ReturnCode echo = broadcastMessage(Const.MY_COMMUNITY, group, Const.CAR_ROLE, data);
 		if(!echo.toString().equals("OK"))

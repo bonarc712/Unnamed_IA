@@ -49,10 +49,10 @@ public class Functions {
 	}
 	
 	public static int manhattan(OrientedPoint a, OrientedPoint b) {
-		/*int dist = 0;
-		if(a != null && b != null)
-			dist = Math.abs(a.x-b.x)+ Math.abs(a.y-b.y);
-		return dist;*/
+//		int dist = 0;
+//		if(a != null && b != null)
+//			dist = Math.abs(a.x-b.x)+ Math.abs(a.y-b.y);
+//		return dist;
 		return Math.abs(a.x-b.x)+ Math.abs(a.y-b.y);
 	}
 	

@@ -36,7 +36,7 @@ public class ReadXmlFile {
 	
 	/**
 	 * @param xmlFile the file to parse
-	 * @return list containing all path for all trains
+	 * @return list containing all paths for all trains
 	 */
 	public List<List<OrientedPoint>> parse(File xmlFile) {
 

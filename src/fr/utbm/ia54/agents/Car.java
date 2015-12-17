@@ -213,7 +213,7 @@ public class Car extends Agent {
 							}
 							else if (!Environment.isInMyTrain(this.getNetworkID(), carEmr) && Functions.manhattan(tmpPos,tmpCross)<Const.CAR_SIZE) {
 								System.out.println("It seems like we have a crash !\n car : " + this.getNetworkID() + " and " + carEmr);
-								System.out.println(" out Pirority over : "+carEmr+" is: " + definePriority(carEmr,carPosEmr,tmpCross));
+								System.out.println(" out Priority over : "+carEmr+" is: " + definePriority(carEmr,carPosEmr,tmpCross));
 								printings += "Potential CRASH between car : " + this.getNetworkID() + " and " + carEmr;
 								/*if(Functions.manhattan(tmpPos,tmpCross)<Functions.manhattan(carPosEmr,tmpCross)) {
 									printings += "exceptionnaly we force out";
