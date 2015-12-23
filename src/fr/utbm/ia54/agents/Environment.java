@@ -186,7 +186,8 @@ public class Environment extends Agent{
 							map.put(cross,groups);
 						}*/
 						
-						carId = Functions.getCarId( carsId.get(i).get(carsId.get(i).size()-1) );
+						carId = carsId.get(i).get(carsId.get(i).size()-1);
+						//carId = Functions.getCarId( carsId.get(i).get(carsId.get(i).size()-1) );
 						carPos = positions.get(carId);
 						//System.out.println("crosspassed : " + carId + ", and " +cross);
 						if(crossPassed(carPos,cross)) {
@@ -200,7 +201,8 @@ public class Environment extends Agent{
 						}
 					}
 					else {// otherwise we check if it's entering the crossing
-						carId = Functions.getCarId(carsId.get(i).get(0));
+						carId = carsId.get(i).get(0);
+						//carId = Functions.getCarId(carsId.get(i).get(0));
 						carPos = positions.get(carId);
 						//System.out.println("train"+i+"car"+carId+"?");
 						if(Functions.manhattan(carPos,cross) < beaconRange ){//&& carPath.isInPath(carPos, i, cross, beaconRange)){
@@ -217,17 +219,23 @@ public class Environment extends Agent{
 					}
 				}
 			}
-			
+
 			if(runningT + Const.PAS <= System.currentTimeMillis()) {
 				runningT = System.currentTimeMillis();
 				
+				//Commenter/décommenter les lignes ci-bas selon que
+				//votre système fonctionne mieux avec les carsId de base
+				//ou les fonctions de Function.
 				for (int i = 0 ; i < carsId.size(); i++) {
 					for (int j = 0; j<carsId.get(i).size()-1; j++) {
-						interdistance = Functions.manhattan(positions.get( Functions.getCarId(carsId.get(i).get(j)) ),positions.get( Functions.getCarId(carsId.get(i).get(j+1)) ));
+						interdistance = Functions.manhattan(positions.get( carsId.get(i).get(j) ),positions.get( carsId.get(i).get(j+1) ));
+						//interdistance = Functions.manhattan(positions.get( Functions.getCarId(carsId.get(i).get(j)) ),positions.get( Functions.getCarId(carsId.get(i).get(j+1)) ));
 						seriesInterD.get(i).getSeries(j).add(runningT.intValue(), interdistance); 
-						seriesSpeed.get(i).getSeries(j).add(runningT.intValue(), positions.get( Functions.getCarId(carsId.get(i).get(j)) ).getSpeed());
+						seriesSpeed.get(i).getSeries(j).add(runningT.intValue(), positions.get( carsId.get(i).get(j) ).getSpeed());
+						//seriesSpeed.get(i).getSeries(j).add(runningT.intValue(), positions.get( Functions.getCarId(carsId.get(i).get(j)) ).getSpeed());
 					}
-					seriesSpeed.get(i).getSeries(carsId.get(i).size()-1).add(runningT.intValue(), positions.get( Functions.getCarId(carsId.get(i).get(carsId.get(i).size()-1)) ).getSpeed());
+					seriesSpeed.get(i).getSeries(carsId.get(i).size()-1).add(runningT.intValue(), positions.get( carsId.get(i).get(carsId.get(i).size()-1) ).getSpeed());
+					//seriesSpeed.get(i).getSeries(carsId.get(i).size()-1).add(runningT.intValue(), positions.get( Functions.getCarId(carsId.get(i).get(carsId.get(i).size()-1)) ).getSpeed());
 				}
 			}
 		}
