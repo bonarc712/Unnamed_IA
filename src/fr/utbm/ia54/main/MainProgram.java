@@ -34,7 +34,7 @@ public class MainProgram extends Agent{
 		
 		/* Build the path to follow by each train */
 		ReadXmlFile read = new ReadXmlFile();		
-		carPath.setPath(read.parse(new File(Const.RESOURCES_DIR+"/circuit8.xml")));
+		carPath.setPath(read.parse(new File(Const.RESOURCES_DIR+"/circuit4.xml")));
 		Const.NB_TRAIN = carPath.getPath().size();
 		carPath.generateCrossing();
 		

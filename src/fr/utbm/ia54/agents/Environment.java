@@ -82,27 +82,45 @@ public class Environment extends Agent{
 		Long runningT = System.currentTimeMillis();
 		List<XYSeriesCollection> seriesInterD = new ArrayList<XYSeriesCollection>();
 		List<XYSeriesCollection> seriesSpeed = new ArrayList<XYSeriesCollection>();
+		List<XYSeriesCollection> seriesWaiting = new ArrayList<XYSeriesCollection>();
+		List<XYSeriesCollection> seriesTotalCross = new ArrayList<XYSeriesCollection>();
 		
 		
 		frame = new JFrame("Simulation Stats");
 		frame.setLayout(new GridLayout(2, 0));
 
 		for (int i = 0 ; i < carsId.size(); i++) {
-			//by train we prepare 2 graphics, one for inter-distance between cars and the other for cars speed
+			//by train we prepare several graphics:
+			//one for inter-distance between cars 
+			//one for cars speed
+			//one for time spent waiting in a crossing
+			//one for total time spent in a crossing
 			
 			XYSeriesCollection dataD = new XYSeriesCollection( );
 			seriesInterD.add(dataD);
 			XYSeriesCollection dataV = new XYSeriesCollection( );
 			seriesSpeed.add(dataV);
+			XYSeriesCollection dataW = new XYSeriesCollection( );
+			seriesWaiting.add(dataW);
+			XYSeriesCollection dataT = new XYSeriesCollection( );
+			seriesTotalCross.add(dataT);
 			
 			for (int j = 0; j<carsId.get(i).size()-1; j++) {
 				final XYSeries serieD = new XYSeries ( "Car" + j + " and Car" + (j+1) );
 				dataD.addSeries(serieD);
 				final XYSeries serieV = new XYSeries ( "Car" + j );
 				dataV.addSeries(serieV);
+				final XYSeries serieW = new XYSeries ( "Car" + j );
+				dataW.addSeries(serieW);
+				final XYSeries serieT = new XYSeries ( "Car" + j );
+				dataT.addSeries(serieT);
 			}
-			final XYSeries serieV = new XYSeries ( "Car" + carsId.get(i).size() );
+			final XYSeries serieV = new XYSeries ( "Car" + (carsId.get(i).size()-1) );
 			dataV.addSeries(serieV);
+			final XYSeries serieW = new XYSeries ( "Car" + (carsId.get(i).size()-1) );
+			dataW.addSeries(serieW);
+			final XYSeries serieT = new XYSeries ( "Car" + (carsId.get(i).size()-1) );
+			dataT.addSeries(serieT);
 			
 			
 			JFreeChart xylineChartD = ChartFactory.createXYLineChart(
@@ -119,19 +137,41 @@ public class Environment extends Agent{
 		         	dataV,
 		         	PlotOrientation.VERTICAL ,
 		         	true , true , false);
+			JFreeChart xylineChartW = ChartFactory.createXYLineChart(
+		         	"waiting time for train"+i,
+		         	"waiting time" ,
+		         	"time for car" ,
+		         	dataW,
+		         	PlotOrientation.VERTICAL ,
+		         	true , true , false);
+			JFreeChart xylineChartT = ChartFactory.createXYLineChart(
+		         	"total time in crossing for train"+i,
+		         	"total time in crossing" ,
+		         	"time for car" ,
+		         	dataW,
+		         	PlotOrientation.VERTICAL ,
+		         	true , true , false);
 		        if(i%2==0) {
 				xylineChartD.setBackgroundPaint(Color.white);
 				xylineChartV.setBackgroundPaint(Color.gray);
+				xylineChartW.setBackgroundPaint(Color.white);
+				xylineChartT.setBackgroundPaint(Color.gray);
 		        }	
 			else {
-				xylineChartV.setBackgroundPaint(Color.white);
 				xylineChartD.setBackgroundPaint(Color.gray);
+				xylineChartV.setBackgroundPaint(Color.white);
+				xylineChartW.setBackgroundPaint(Color.gray);
+				xylineChartT.setBackgroundPaint(Color.white);
 			}
 			
 			ChartPanel panelD = new ChartPanel(xylineChartD);
 			frame.add(panelD);
 			ChartPanel panelV = new ChartPanel(xylineChartV);
 			frame.add(panelV);
+			ChartPanel panelW = new ChartPanel(xylineChartW);
+			frame.add(panelW);
+			ChartPanel panelT = new ChartPanel(xylineChartT);
+			frame.add(panelT);
 		}
 		
 		frame.pack();
