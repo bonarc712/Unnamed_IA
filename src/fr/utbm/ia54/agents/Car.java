@@ -1,7 +1,6 @@
 package fr.utbm.ia54.agents;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -11,18 +10,17 @@ import java.util.Set;
 //import java.util.function.Function;
 
 import javax.swing.ImageIcon;
-import javax.swing.JLabel;
 
-import madkit.kernel.Agent;
-import madkit.kernel.Message;
-import madkit.message.ObjectMessage;
-import madkit.message.StringMessage;
 import fr.utbm.ia54.consts.Const;
 import fr.utbm.ia54.main.MainProgram;
 import fr.utbm.ia54.path.CarPath;
 import fr.utbm.ia54.utils.Functions;
 import fr.utbm.ia54.utils.OrientedPoint;
 import fr.utbm.ia54.utils.RotateLabel;
+import madkit.kernel.Agent;
+import madkit.kernel.Message;
+import madkit.message.ObjectMessage;
+import madkit.message.StringMessage;
 
 /**
  * Car class.
@@ -44,6 +42,8 @@ public class Car extends Agent {
 	private int position;
 	private int numTrain;
 	private int carColor;
+	private int timeSpentWaiting;
+	private int timeSpentCrossing;
 	
 	private RotateLabel icone;
 	private CarPath carPath;
@@ -77,6 +77,8 @@ public class Car extends Agent {
 		safeD = Const.CAR_SIZE;
 		seeD = 4*Const.CAR_SIZE;
 		crossingD = 2*safeD;
+		timeSpentWaiting = 0;
+		timeSpentCrossing = 0;
 		
 		knownCars = new HashMap<String, OrientedPoint>();
 		crossCars = new LinkedList<String>();
@@ -236,7 +238,7 @@ public class Car extends Agent {
 					printings += "Emergencies : on essaie de s'arreter tant bien que mal.\n"; 
 				} 
 				else {
-/* NOT MEMERGENCIES, BUT WATCHLIST **********************************/
+/* NOT EMERGENCIES, BUT WATCHLIST **********************************/
 				//TODO multi(>2) trains, not operationnal at ALL for that. 
 
 					printings += "No emergencies, we go for neighbors.\n"; 
@@ -544,6 +546,9 @@ public class Car extends Agent {
 	}
 	
 	private void executingRun(float newV, float toSlowV, float distance, OrientedPoint tmpPos) {
+		
+		timeSpentWaiting++;
+		timeSpentCrossing++;
 		// we slow down as much as possible
 		if (Const.DECC * (Const.PAS/1000.f) > toSlowV) {
 			// we can slow down as much as we need
@@ -574,6 +579,8 @@ public class Car extends Agent {
 		}
 		
 		moveTo(tmpPos);
+		tmpPos.setTimeSpentCrossing(timeSpentCrossing);
+		tmpPos.setTimeSpentWaiting(timeSpentWaiting);
 		HashMap<String, OrientedPoint> sendPos = new HashMap<String, OrientedPoint>();
 		sendPos.put(this.getNetworkID(), tmpPos);
 		sendMessage(Const.MY_COMMUNITY, group, Const.ENV_ROLE, new ObjectMessage<HashMap<String, OrientedPoint>>(sendPos));

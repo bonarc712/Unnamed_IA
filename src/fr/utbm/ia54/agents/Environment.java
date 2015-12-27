@@ -83,7 +83,7 @@ public class Environment extends Agent{
 		List<XYSeriesCollection> seriesInterD = new ArrayList<XYSeriesCollection>();
 		List<XYSeriesCollection> seriesSpeed = new ArrayList<XYSeriesCollection>();
 		List<XYSeriesCollection> seriesWaiting = new ArrayList<XYSeriesCollection>();
-		List<XYSeriesCollection> seriesTotalCross = new ArrayList<XYSeriesCollection>();
+		List<XYSeriesCollection> seriesCrossing = new ArrayList<XYSeriesCollection>();
 		
 		
 		frame = new JFrame("Simulation Stats");
@@ -103,7 +103,7 @@ public class Environment extends Agent{
 			XYSeriesCollection dataW = new XYSeriesCollection( );
 			seriesWaiting.add(dataW);
 			XYSeriesCollection dataT = new XYSeriesCollection( );
-			seriesTotalCross.add(dataT);
+			seriesCrossing.add(dataT);
 			
 			for (int j = 0; j<carsId.get(i).size()-1; j++) {
 				final XYSeries serieD = new XYSeries ( "Car" + j + " and Car" + (j+1) );
@@ -140,15 +140,15 @@ public class Environment extends Agent{
 			JFreeChart xylineChartW = ChartFactory.createXYLineChart(
 		         	"waiting time for train"+i,
 		         	"waiting time" ,
-		         	"time for car" ,
+		         	"ticks for car" ,
 		         	dataW,
 		         	PlotOrientation.VERTICAL ,
 		         	true , true , false);
 			JFreeChart xylineChartT = ChartFactory.createXYLineChart(
 		         	"total time in crossing for train"+i,
 		         	"total time in crossing" ,
-		         	"time for car" ,
-		         	dataW,
+		         	"ticks for car" ,
+		         	dataT,
 		         	PlotOrientation.VERTICAL ,
 		         	true , true , false);
 		        if(i%2==0) {
@@ -273,9 +273,13 @@ public class Environment extends Agent{
 						seriesInterD.get(i).getSeries(j).add(runningT.intValue(), interdistance); 
 						seriesSpeed.get(i).getSeries(j).add(runningT.intValue(), positions.get( carsId.get(i).get(j) ).getSpeed());
 						//seriesSpeed.get(i).getSeries(j).add(runningT.intValue(), positions.get( Functions.getCarId(carsId.get(i).get(j)) ).getSpeed());
+						seriesWaiting.get(i).getSeries(j).add(runningT.intValue(), positions.get( carsId.get(i).get(j) ).getTimeSpentWaiting());
+						seriesCrossing.get(i).getSeries(j).add(runningT.intValue(), positions.get( carsId.get(i).get(j) ).getTimeSpentCrossing());
 					}
 					seriesSpeed.get(i).getSeries(carsId.get(i).size()-1).add(runningT.intValue(), positions.get( carsId.get(i).get(carsId.get(i).size()-1) ).getSpeed());
 					//seriesSpeed.get(i).getSeries(carsId.get(i).size()-1).add(runningT.intValue(), positions.get( Functions.getCarId(carsId.get(i).get(carsId.get(i).size()-1)) ).getSpeed());
+					seriesWaiting.get(i).getSeries(carsId.get(i).size()-1).add(runningT.intValue(), positions.get( carsId.get(i).get(carsId.get(i).size()-1) ).getTimeSpentWaiting());
+					seriesCrossing.get(i).getSeries(carsId.get(i).size()-1).add(runningT.intValue(), positions.get( carsId.get(i).get(carsId.get(i).size()-1) ).getTimeSpentCrossing());
 				}
 			}
 		}

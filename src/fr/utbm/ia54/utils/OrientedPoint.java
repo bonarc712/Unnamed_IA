@@ -13,6 +13,8 @@ public class OrientedPoint extends Point {
 	private static final long serialVersionUID = 1L;
 	public double orientation;
 	public double speed;
+	public int timeSpentWaiting;
+	public int timeSpentCrossing;
 	
 	public OrientedPoint() {
 		this(0);
@@ -61,4 +63,21 @@ public class OrientedPoint extends Point {
 	public void setSpeed(double speed) {
 		this.speed = speed;
 	}
+
+	public int getTimeSpentWaiting() {
+		return timeSpentWaiting;
+	}
+
+	public void setTimeSpentWaiting(int timeSpentWaiting) {
+		this.timeSpentWaiting = timeSpentWaiting;
+	}
+
+	public int getTimeSpentCrossing() {
+		return timeSpentCrossing;
+	}
+
+	public void setTimeSpentCrossing(int timeSpentCrossing) {
+		this.timeSpentCrossing = timeSpentCrossing;
+	}
+	
 }
