@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 //import java.util.function.Function;
+import java.util.logging.Level;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -60,6 +61,8 @@ public class Car extends Agent {
 	 */
 	@Override
 	protected void activate() {
+		//setLogLevel(Level.FINEST); // Madkit print log
+		
 		carPath = MainProgram.getCarPath();
 		numTrain = getNumTrain(group);
 		pos = carPath.getStart(numTrain);
@@ -384,6 +387,13 @@ public class Car extends Agent {
 /* APPLICATION OF WHAT IS PLANNED ********************/
 			executingRun(newV, toSlowV, distance, tmpPos);
 			pause(Const.PAS);
+			
+			
+			if(pos.speed == 0)
+				System.out.println("Car stopped");
+			
+			System.out.println("Speed : " + pos.speed);
+			
 		}//while live
 	}
 
@@ -412,7 +422,7 @@ public class Car extends Agent {
 		//icone = new RotateLabel(car, carId);
 		icone = new RotateLabel(car, carId+","+Integer.toString(position));
    		icone.setBounds(0,0,Const.CAR_SIZE, Const.CAR_SIZE);
-   		icone.setLocation(pos.x, pos.y);
+   		icone.setLocation((int) pos.x, (int) pos.y);
    		icone.setAngle(pos.getAngle());
    		
    		/* Add the car to the frame */
@@ -424,7 +434,7 @@ public class Car extends Agent {
 	 * @param tmpPos
 	 */
 	private void moveTo(OrientedPoint tmpPos) {
-		icone.setLocation(tmpPos.x, tmpPos.y);
+		icone.setLocation((int) tmpPos.x, (int) tmpPos.y);
 		icone.setAngle(tmpPos.orientation);
 	}
 	
@@ -577,8 +587,13 @@ public class Car extends Agent {
 		HashMap<String, OrientedPoint> sendPos = new HashMap<String, OrientedPoint>();
 		sendPos.put(this.getNetworkID(), tmpPos);
 		sendMessage(Const.MY_COMMUNITY, group, Const.ENV_ROLE, new ObjectMessage<HashMap<String, OrientedPoint>>(sendPos));
-		pos = tmpPos; 
-		pos.setSpeed(newV);
+
+		tmpPos.setSpeed(newV);
+		
+		if(tmpPos.speed == 0)
+			System.out.println("Car stoped");
+		
+		pos = tmpPos;
 		
 		if(printingTurn)
 			System.out.println(printings);

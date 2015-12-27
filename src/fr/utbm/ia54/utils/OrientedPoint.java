@@ -1,6 +1,7 @@
 package fr.utbm.ia54.utils;
 
 import java.awt.Point;
+import java.awt.geom.Point2D;
 
 /**
  * 
@@ -8,7 +9,7 @@ import java.awt.Point;
  * Manages a point which is oriented.
  * the orientation is given in radiant (0 is facing north)
  */
-public class OrientedPoint extends Point {
+public class OrientedPoint extends Point2D.Double {
 	
 	private static final long serialVersionUID = 1L;
 	public double orientation;
@@ -29,7 +30,7 @@ public class OrientedPoint extends Point {
 	}
 	
 	public OrientedPoint (OrientedPoint p) {
-		super((Point)p);
+		super(p.x,p.y);
 		orientation = p.getOrientation();
 	}
 

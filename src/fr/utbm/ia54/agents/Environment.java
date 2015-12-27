@@ -272,9 +272,13 @@ public class Environment extends Agent{
 						//interdistance = Functions.manhattan(positions.get( Functions.getCarId(carsId.get(i).get(j)) ),positions.get( Functions.getCarId(carsId.get(i).get(j+1)) ));
 						seriesInterD.get(i).getSeries(j).add(runningT.intValue(), interdistance); 
 						seriesSpeed.get(i).getSeries(j).add(runningT.intValue(), positions.get( carsId.get(i).get(j) ).getSpeed());
+						if(positions.get( carsId.get(i).get(j) ).getSpeed() == 0)
+							System.out.println("car stopped");
 						//seriesSpeed.get(i).getSeries(j).add(runningT.intValue(), positions.get( Functions.getCarId(carsId.get(i).get(j)) ).getSpeed());
 					}
 					seriesSpeed.get(i).getSeries(carsId.get(i).size()-1).add(runningT.intValue(), positions.get( carsId.get(i).get(carsId.get(i).size()-1) ).getSpeed());
+					if( positions.get( carsId.get(i).get(carsId.get(i).size()-1) ).getSpeed() == 0.0)
+						System.out.println("car stopped");
 					//seriesSpeed.get(i).getSeries(carsId.get(i).size()-1).add(runningT.intValue(), positions.get( Functions.getCarId(carsId.get(i).get(carsId.get(i).size()-1)) ).getSpeed());
 				}
 			}

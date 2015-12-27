@@ -9,11 +9,11 @@ public class Const {
 	/* Car settings */
 	public static final float 	ACC = 200;
 	public static final float 	DECC = 300;
-	public static final int 	PAS=35;
+	public static final int 	PAS=35; // default : 35
 	
 	
 	/* Simulation settings */
-	public static final int NB_CAR_BY_TRAIN = 5;
+	public static final int NB_CAR_BY_TRAIN = 5; // default : 5
 	public static int NB_TRAIN;
 	
 	/* Community, role and group constants */
