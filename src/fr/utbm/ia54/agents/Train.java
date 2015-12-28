@@ -135,7 +135,7 @@ public class Train extends Agent {
 					HashMap<String,OrientedPoint> dataRetrieved = (HashMap<String, OrientedPoint>) o;
 					for(String i : dataRetrieved.keySet()) {
 						if(i.equals("crossing")) {
-							System.out.println("Train" + numTrain + " entered a crossing");
+							//System.out.println("Train" + numTrain + " entered a crossing");
 							
 							soloCrossing.add(dataRetrieved.get(i));
 							
@@ -151,7 +151,7 @@ public class Train extends Agent {
 							//if we are into the crossing (or coming to it)
 							//we adapt our own speed and crossing distance, and warn the other train
 							if(soloCrossing.contains(dataRetrieved.get(i))) {
-								System.out.println("Train" + numTrain +": ...And we are into this crossing");
+								//System.out.println("Train" + numTrain +": ...And we are into this crossing");
 								notAloneCrossing.add(dataRetrieved.get(i));
 								changeCarBehavior(new StringMessage("speed:"+crossingSpeed));
 								changeCarBehavior(new StringMessage("crossD:"+crossingSafeD));
@@ -171,7 +171,7 @@ public class Train extends Agent {
 							}
 							
 						} else if (i.equals("confirmCrossing")) {
-							System.out.println("Train" + numTrain +": So both trains are into the crossing");
+							//System.out.println("Train" + numTrain +": So both trains are into the crossing");
 							//another train have detected collision potential, we adapt speed(safe D) and crossing distance
 							if(soloCrossing.contains(dataRetrieved.get(i))) {
 								notAloneCrossing.add(dataRetrieved.get(i));
@@ -187,7 +187,7 @@ public class Train extends Agent {
 						}
 							
 						else if (i.equals("exitCrossing")) {
-							System.out.println("Train" + numTrain + " is getting out of the crossing");
+							//System.out.println("Train" + numTrain + " is getting out of the crossing");
 							//we have left the crossing, return to normal state
 							soloCrossing.remove(dataRetrieved.get(i));
 							if(notAloneCrossing.contains(dataRetrieved.get(i))) {
@@ -202,7 +202,7 @@ public class Train extends Agent {
 							}
 						}
 						else if (i.equals("warningExitCrossing")) {
-							System.out.println("Train" + numTrain + " is finally alone in the crossing");
+							//System.out.println("Train" + numTrain + " is finally alone in the crossing");
 							//we have left the crossing, return to normal state
 							notAloneCrossing.remove(dataRetrieved.get(i));
 							changeCarBehavior(new StringMessage("speed:"+speed));
@@ -218,7 +218,7 @@ public class Train extends Agent {
 					if(soloCrossing.contains(otherCars.peek())) {
 						notAloneCrossing.add(otherCars.peek());
 					}
-					System.out.println("Train" + numTrain +": So both trains are into the crossing");
+					//System.out.println("Train" + numTrain +": So both trains are into the crossing");
 					changeCarBehavior(new StringMessage("crossD:"+crossingSafeD));
 				}
 			}

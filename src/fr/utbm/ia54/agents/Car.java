@@ -44,6 +44,7 @@ public class Car extends Agent {
 	private int carColor;
 	private int timeSpentWaiting;
 	private int timeSpentCrossing;
+	private boolean isInCrossing;
 	
 	private RotateLabel icone;
 	private CarPath carPath;
@@ -79,6 +80,7 @@ public class Car extends Agent {
 		crossingD = 2*safeD;
 		timeSpentWaiting = 0;
 		timeSpentCrossing = 0;
+		isInCrossing = false;
 		
 		knownCars = new HashMap<String, OrientedPoint>();
 		crossCars = new LinkedList<String>();
@@ -376,6 +378,11 @@ public class Car extends Agent {
 							toSlowVOutTrain = 0;
 					}
 					
+					//if (cross != null)
+					//	System.out.println("Crossing : " + cross);
+					//else
+					//	System.out.println("Cross is null");
+					
 					//We now now how much we need to slow down for each situation. We take care of the most important one
 					toSlowV = (toSlowVOutTrain < toSlowVInTrain) ? toSlowVInTrain : toSlowVOutTrain ;
 					printings += "cars from the neibghors have us make slowing down : " + toSlowV + ".\n";
@@ -445,6 +452,8 @@ public class Car extends Agent {
 			if(m instanceof StringMessage) {
 				StringMessage message = (StringMessage) m;
 				String[] data = message.getContent().split(":");
+				
+				//The speed messages give the speed to reach.
 				if(data[0].equals("speed")) {
 					vToReach = Float.valueOf(data[1]);
 					// correction for train fusion
@@ -453,6 +462,8 @@ public class Car extends Agent {
 					printings += " objective speed is now " + vToReach + "\n";
 					//System.out.println(" objective speed is now " + vToReach);
 				}
+				
+				//The safeD messages give the safe distance to have.
 				else if(data[0].equals("safeD")) {
 					safeD = Integer.valueOf(data[1]);
 					seeD = 3*safeD;
@@ -460,6 +471,8 @@ public class Car extends Agent {
 					printings += " Safe distance is now " + safeD + "\n";
 					//System.out.println(" Safe distance is now " + safeD + ", and seeD : " + seeD);
 				} 
+				
+				//The crossing messages determine whether we have priority or not.
 				else if (data[0].equals("crossing")) {
 					String id = new String();
 					try {
@@ -489,6 +502,26 @@ public class Car extends Agent {
 				} else if (data[0].equals("crossD")) {
 					crossingD = Integer.valueOf(data[1]);
 					printings += " following distance is now " + crossingD + "\n";
+				}
+				
+				//The changedCrossingStatus messages determine if we entered or left a crossing.
+				else if (data[0].equals("changedCrossingStatus")) { 
+					String id = new String();
+					try {
+						id = data[2];
+					}
+					catch (Exception e) {
+						System.out.println("Error in messaging crossing status, we get the message" + message.getContent() + " from " + message.getSender() + " we are car : " + this.getNetworkID());
+					}
+					
+					if (id.equals(this.getNetworkID())) {
+						if (data[1].equals("true")) {
+							isInCrossing = true;
+						}
+						else {
+							isInCrossing = false;
+						}
+					}
 				}
 				else if (data[0].equals("printPriority")) {
 					String priorities = new String("Priorities of " + this.getName() + " (" + crossCarStatus.size() + ")");
@@ -547,8 +580,6 @@ public class Car extends Agent {
 	
 	private void executingRun(float newV, float toSlowV, float distance, OrientedPoint tmpPos) {
 		
-		timeSpentWaiting++;
-		timeSpentCrossing++;
 		// we slow down as much as possible
 		if (Const.DECC * (Const.PAS/1000.f) > toSlowV) {
 			// we can slow down as much as we need
@@ -579,6 +610,17 @@ public class Car extends Agent {
 		}
 		
 		moveTo(tmpPos);
+		
+		if (isInCrossing) {
+			if (newV < 20) { //under 20 of speed is considered in waiting
+				timeSpentWaiting++;
+			}
+			timeSpentCrossing++;
+		}
+		else {
+			timeSpentWaiting = 0;
+			timeSpentCrossing = 0;
+		}
 		tmpPos.setTimeSpentCrossing(timeSpentCrossing);
 		tmpPos.setTimeSpentWaiting(timeSpentWaiting);
 		HashMap<String, OrientedPoint> sendPos = new HashMap<String, OrientedPoint>();

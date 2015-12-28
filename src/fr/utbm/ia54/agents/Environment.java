@@ -172,6 +172,8 @@ public class Environment extends Agent{
 			frame.add(panelW);
 			ChartPanel panelT = new ChartPanel(xylineChartT);
 			frame.add(panelT);
+			
+			//END Stats Generation
 		}
 		
 		frame.pack();
@@ -226,6 +228,23 @@ public class Environment extends Agent{
 							map.put(cross,groups);
 						}*/
 						
+						//Check if a car entered or left the crossing
+						
+						for(int j=0; j<carsId.get(i).size(); ++j) {
+							carId = carsId.get(i).get(j);
+							carPos = positions.get(carId);
+							if(Functions.manhattan(carPos,cross) < beaconRange && Functions.isBefore(carPos, cross)){
+								StringMessage msgToCar = new StringMessage("changedCrossingStatus:true:" + carId);
+								sendMessage(Const.MY_COMMUNITY, carGroup, Const.CAR_ROLE, msgToCar);
+							}
+							else if (crossPassed(carPos,cross)) {
+								StringMessage msgToCar = new StringMessage("changedCrossingStatus:false:" + carId);
+								sendMessage(Const.MY_COMMUNITY, carGroup, Const.CAR_ROLE, msgToCar);
+							}
+						}
+						
+						//Check if we got to last car
+						
 						carId = carsId.get(i).get(carsId.get(i).size()-1);
 						//carId = Functions.getCarId( carsId.get(i).get(carsId.get(i).size()-1) );
 						carPos = positions.get(carId);
@@ -255,6 +274,8 @@ public class Environment extends Agent{
 							sendMessage(Const.MY_COMMUNITY, carGroup, Const.TRAIN_ROLE, msg);
 							groups.add(carGroup);
 							map.put(cross,groups);
+							StringMessage msgToCar = new StringMessage("changedCrossingStatus:true:" + carId);
+							sendMessage(Const.MY_COMMUNITY, carGroup, Const.CAR_ROLE, msgToCar);
 						}
 					}
 				}
@@ -263,9 +284,9 @@ public class Environment extends Agent{
 			if(runningT + Const.PAS <= System.currentTimeMillis()) {
 				runningT = System.currentTimeMillis();
 				
-				//Commenter/décommenter les lignes ci-bas selon que
-				//votre système fonctionne mieux avec les carsId de base
-				//ou les fonctions de Function.
+				//You can comment/uncomment the lines below whether
+				//your system works better with basic carsIds or the
+				//functions in Function.
 				for (int i = 0 ; i < carsId.size(); i++) {
 					for (int j = 0; j<carsId.get(i).size()-1; j++) {
 						interdistance = Functions.manhattan(positions.get( carsId.get(i).get(j) ),positions.get( carsId.get(i).get(j+1) ));
