@@ -70,7 +70,7 @@ public class MainProgram extends Agent{
 		for(int i=0; i<Const.NB_TRAIN;i++) {
 			trains[i] = new Train();
 			launchAgent(trains[i]);
-			pause(1000);
+			//pause(1000);
 		}
 		
 		// 5 : Launch Scheduler

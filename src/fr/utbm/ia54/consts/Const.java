@@ -13,7 +13,7 @@ public class Const {
 	
 	
 	/* Simulation settings */
-	public static final int NB_CAR_BY_TRAIN = 2; // default : 5
+	public static final int NB_CAR_BY_TRAIN = 5; // default : 5
 	public static int NB_TRAIN;
 	
 	/* Community, role and group constants */
