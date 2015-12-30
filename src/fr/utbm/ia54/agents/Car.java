@@ -14,6 +14,7 @@ import java.util.logging.Level;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 
+import madkit.kernel.AbstractAgent;
 import madkit.kernel.Agent;
 import madkit.kernel.Message;
 import madkit.message.ObjectMessage;
@@ -29,7 +30,7 @@ import fr.utbm.ia54.utils.RotateLabel;
  * Car class.
  * @author Alexis Florian
  */
-public class Car extends Agent {
+public class Car extends AbstractAgent {
 
 	private OrientedPoint pos;
 	private OrientedPoint tmpPos;
@@ -56,6 +57,38 @@ public class Car extends Agent {
 	private String printings = new String();
 	
 	
+	
+	
+
+	private boolean live = true;
+	
+	
+	private float distance = 0;
+	private float slowD = 0;
+	private float toSlowV = 0;
+	private int place =0;
+	
+	private String closerInTrain = null;
+	private OrientedPoint closerPosInTrain = null;
+	private float toSlowVInTrain;
+	private String closerOutTrain = null;
+	private OrientedPoint closerPosOutTrain = null;
+	private float toSlowVOutTrain;
+	
+	private Boolean isInTrain = true;
+	
+	private Boolean messageToCar;
+	
+	private ArrayList<OrientedPoint> crossings;
+	private OrientedPoint cross = null;
+	private Boolean priority = false;
+	
+	private HashMap<String, OrientedPoint> neighbours = new HashMap<String, OrientedPoint>();
+	private HashMap<String, OrientedPoint> emergencies = new HashMap<String, OrientedPoint>();
+	private HashMap<String, OrientedPoint> tmpKnownCars = new HashMap<String, OrientedPoint>();
+	
+	
+	
 	/**
 	 * This is the first activated behavior in the life cycle of a MaDKit agent.
 	 */
@@ -71,6 +104,8 @@ public class Car extends Agent {
 		
 		requestRole(Const.MY_COMMUNITY,group,Const.CAR_ROLE);
 		requestRole(Const.MY_COMMUNITY,group, this.getNetworkID());
+		
+		requestRole(Const.MY_COMMUNITY,Const.SIMU_GROUP,Const.CAR_ROLE);
 		
 		addCar();
 		
@@ -90,39 +125,12 @@ public class Car extends Agent {
 	/**
 	 * This is the second behavior which is activated, i.e. when activate ends.
 	 * It actually implements the life of the agent.
-	 * It is usually a while true loop.
 	 */
-	@Override
-	protected void live() {
-		boolean live = true;
+	protected void doIt() {
+    	System.out.println("Hello i'm car");
 		
-		
-		float distance = 0;
-		float slowD = 0;
-		float toSlowV = 0;
-		int place =0;
-		
-		String closerInTrain = null;
-		OrientedPoint closerPosInTrain = null;
-		float toSlowVInTrain;
-		String closerOutTrain = null;
-		OrientedPoint closerPosOutTrain = null;
-		float toSlowVOutTrain;
-		
-		Boolean isInTrain = true;
-		
-		Boolean messageToCar;
-		
-		ArrayList<OrientedPoint> crossings;
-		OrientedPoint cross = null;
-		Boolean priority = false;
-		
-		HashMap<String, OrientedPoint> neighbours = new HashMap<String, OrientedPoint>();
-		HashMap<String, OrientedPoint> emergencies = new HashMap<String, OrientedPoint>();
-		HashMap<String, OrientedPoint> tmpKnownCars = new HashMap<String, OrientedPoint>();
-		
-		// we drive for a while
-		while(live) {
+		/*// we drive for a while
+		while(live) {*/
 			closerInTrain = new String();
 			closerOutTrain = new String();
 			toSlowVInTrain = 0;
@@ -386,15 +394,16 @@ public class Car extends Agent {
 			}//no neighbours
 /* APPLICATION OF WHAT IS PLANNED ********************/
 			executingRun(newV, toSlowV, distance, tmpPos);
-			pause(Const.PAS);
+			//pause(Const.PAS);
 			
 			
-			if(pos.speed == 0)
-				System.out.println("Car stopped");
+			//if(pos.speed == 0)
+				//System.out.println("Car stopped");
 			
-			System.out.println("Speed : " + pos.speed);
+			//System.out.println("Speed : " + pos.speed);
+			System.out.println(this.getNetworkID() + " - speed : " + pos.speed);
 			
-		}//while live
+		//}//while live
 	}
 
 

@@ -8,6 +8,7 @@ import java.util.List;
 import fr.utbm.ia54.consts.Const;
 import fr.utbm.ia54.utils.Functions;
 import fr.utbm.ia54.utils.OrientedPoint;
+import madkit.kernel.AbstractAgent;
 import madkit.kernel.Agent;
 import madkit.kernel.Message;
 import madkit.message.ObjectMessage;
@@ -17,7 +18,7 @@ import madkit.message.StringMessage;
  * Train class.
  * @author Alexis Florian
  */
-public class Train extends Agent {
+public class Train extends AbstractAgent {
 	
 	private float speed;
 	private float crossingSpeed;
@@ -56,10 +57,6 @@ public class Train extends Agent {
 
         requestRole(Const.MY_COMMUNITY, group, Const.TRAIN_ROLE);
         requestRole(Const.MY_COMMUNITY, Const.TRAIN_ROLE, Const.TRAIN_ROLE);
-	}
-
-	@Override
-	protected void live() {
 
 		/* Create cars */
 		int i = 0;
@@ -76,7 +73,7 @@ public class Train extends Agent {
 			else {
 				count --;
 			}
-			pause(Const.PAS);
+			//pause(Const.PAS);
 		}
 		
 		i=0;
@@ -84,15 +81,20 @@ public class Train extends Agent {
 		changeCarBehavior(new StringMessage("safeD:"+safeD));
 		changeCarBehavior(new StringMessage("crossD:"+safeD));
 		
-		while(true) {
+	}
+
+	protected void doIt() {
+		
+
+    	System.out.println("Hello i'm train");
+    	
 			getNewMessages();
 			/*All behaviours in train are related to communication, 
 			
 			TODO deal with multiple train
 			TODO deal with train following eachother
 			*/
-			pause(Const.PAS);
-		}
+			//pause(Const.PAS);
 	}
 
 	@Override

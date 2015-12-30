@@ -22,6 +22,7 @@ import fr.utbm.ia54.main.MainProgram;
 import fr.utbm.ia54.path.CarPath;
 import fr.utbm.ia54.utils.Functions;
 import fr.utbm.ia54.utils.OrientedPoint;
+import madkit.kernel.AbstractAgent;
 import madkit.kernel.Agent;
 import madkit.kernel.AgentAddress;
 import madkit.kernel.Message;
@@ -32,13 +33,26 @@ import madkit.message.StringMessage;
  * @author Alexis Florian
  * This agent control every car's trajectory and warn cars about collisions.
  */
-public class Environment extends Agent{
+public class Environment extends AbstractAgent {
 	private HashMap<String, OrientedPoint> positions;
 	private HashMap<String, AgentAddress> addresses;
 	private static List<List<String>> carsId; // List of car's networkId (one list by train)
 	private Integer beaconRange;
 	private Menu menu;
 	private JFrame frame;
+	
+	private boolean init = false;
+	
+	private CarPath carPath;
+	private HashMap<OrientedPoint, List<String>> map;
+	
+	private List<XYSeriesCollection> seriesInterD;
+	private List<XYSeriesCollection> seriesSpeed;
+	private List<XYSeriesCollection> seriesWaiting;
+	private List<XYSeriesCollection> seriesTotalCross;
+	
+	private int interdistance;
+	private Long runningT;
 
 	/**
 	 * This is the first activated behavior in the life cycle of a MaDKit agent.
@@ -56,140 +70,147 @@ public class Environment extends Agent{
 			group = Const.SIMU_GROUP+i;
 			requestRole(Const.MY_COMMUNITY, group, Const.ENV_ROLE);
 			carsId.add(new ArrayList<String>());
-		}
+		}	
+
+		requestRole(Const.MY_COMMUNITY,Const.SIMU_GROUP,Const.ENV_ROLE);
 	}
 
-	@Override
-    protected void live() {
-		HashMap<OrientedPoint, List<String>> map = new HashMap<OrientedPoint, List<String>>(); // List of trains by crossing
-		int nb = 0;
-		CarPath carPath = MainProgram.getCarPath();
+    protected void doIt() {
+    	
+    	System.out.println("Hello i'm env");
 		
-		// Waiting for car initialization
-		while(nb != carsId.size()*Const.NB_CAR_BY_TRAIN) {
-			getNewMessages();
-			nb = 0;
+		if(!init) {
+			map = new HashMap<OrientedPoint, List<String>>(); // List of trains by crossing
+			int nb = 0;
+			carPath = MainProgram.getCarPath();
+			
+			// Waiting for car initialization
+			while(nb != carsId.size()*Const.NB_CAR_BY_TRAIN) {
+				getNewMessages();
+				nb = 0;
+				for(int i=0; i<carsId.size();i++){
+					nb += carsId.get(i).size();
+				}
+			}
 			for(int i=0; i<carsId.size();i++){
-				nb += carsId.get(i).size();
+				menu.addCarList(carsId.get(i));
 			}
-		}
-		for(int i=0; i<carsId.size();i++){
-			menu.addCarList(carsId.get(i));
-		}
 
-	/*********************stats*****************************/
-		int interdistance;
-		Long runningT = System.currentTimeMillis();
-		List<XYSeriesCollection> seriesInterD = new ArrayList<XYSeriesCollection>();
-		List<XYSeriesCollection> seriesSpeed = new ArrayList<XYSeriesCollection>();
-		List<XYSeriesCollection> seriesWaiting = new ArrayList<XYSeriesCollection>();
-		List<XYSeriesCollection> seriesTotalCross = new ArrayList<XYSeriesCollection>();
-		
-		
-		frame = new JFrame("Simulation Stats");
-		frame.setLayout(new GridLayout(2, 0));
+		/*********************stats*****************************/
+			runningT = System.currentTimeMillis();
+			seriesInterD = new ArrayList<XYSeriesCollection>();
+			seriesSpeed = new ArrayList<XYSeriesCollection>();
+			seriesWaiting = new ArrayList<XYSeriesCollection>();
+			seriesTotalCross = new ArrayList<XYSeriesCollection>();
+			
+			
+			frame = new JFrame("Simulation Stats");
+			frame.setLayout(new GridLayout(2, 0));
 
-		for (int i = 0 ; i < carsId.size(); i++) {
-			//by train we prepare several graphics:
-			//one for inter-distance between cars 
-			//one for cars speed
-			//one for time spent waiting in a crossing
-			//one for total time spent in a crossing
-			
-			XYSeriesCollection dataD = new XYSeriesCollection( );
-			seriesInterD.add(dataD);
-			XYSeriesCollection dataV = new XYSeriesCollection( );
-			seriesSpeed.add(dataV);
-			XYSeriesCollection dataW = new XYSeriesCollection( );
-			seriesWaiting.add(dataW);
-			XYSeriesCollection dataT = new XYSeriesCollection( );
-			seriesTotalCross.add(dataT);
-			
-			for (int j = 0; j<carsId.get(i).size()-1; j++) {
-				final XYSeries serieD = new XYSeries ( "Car" + j + " and Car" + (j+1) );
-				dataD.addSeries(serieD);
-				final XYSeries serieV = new XYSeries ( "Car" + j );
+			for (int i = 0 ; i < carsId.size(); i++) {
+				//by train we prepare several graphics:
+				//one for inter-distance between cars 
+				//one for cars speed
+				//one for time spent waiting in a crossing
+				//one for total time spent in a crossing
+				
+				XYSeriesCollection dataD = new XYSeriesCollection( );
+				seriesInterD.add(dataD);
+				XYSeriesCollection dataV = new XYSeriesCollection( );
+				seriesSpeed.add(dataV);
+				XYSeriesCollection dataW = new XYSeriesCollection( );
+				seriesWaiting.add(dataW);
+				XYSeriesCollection dataT = new XYSeriesCollection( );
+				seriesTotalCross.add(dataT);
+				
+				for (int j = 0; j<carsId.get(i).size()-1; j++) {
+					final XYSeries serieD = new XYSeries ( "Car" + j + " and Car" + (j+1) );
+					dataD.addSeries(serieD);
+					final XYSeries serieV = new XYSeries ( "Car" + j );
+					dataV.addSeries(serieV);
+					final XYSeries serieW = new XYSeries ( "Car" + j );
+					dataW.addSeries(serieW);
+					final XYSeries serieT = new XYSeries ( "Car" + j );
+					dataT.addSeries(serieT);
+				}
+				final XYSeries serieV = new XYSeries ( "Car" + (carsId.get(i).size()-1) );
 				dataV.addSeries(serieV);
-				final XYSeries serieW = new XYSeries ( "Car" + j );
+				final XYSeries serieW = new XYSeries ( "Car" + (carsId.get(i).size()-1) );
 				dataW.addSeries(serieW);
-				final XYSeries serieT = new XYSeries ( "Car" + j );
+				final XYSeries serieT = new XYSeries ( "Car" + (carsId.get(i).size()-1) );
 				dataT.addSeries(serieT);
+				
+				
+				JFreeChart xylineChartD = ChartFactory.createXYLineChart(
+			         	"interdistance for train"+i,
+			         	"time" ,
+			         	"distance from previous car" ,
+			         	dataD,
+			         	PlotOrientation.VERTICAL ,
+			         	true , true , false);
+				JFreeChart xylineChartV = ChartFactory.createXYLineChart(
+			         	"speed for train"+i,
+			         	"time" ,
+			         	"speed of car" ,
+			         	dataV,
+			         	PlotOrientation.VERTICAL ,
+			         	true , true , false);
+				JFreeChart xylineChartW = ChartFactory.createXYLineChart(
+			         	"waiting time for train"+i,
+			         	"waiting time" ,
+			         	"time for car" ,
+			         	dataW,
+			         	PlotOrientation.VERTICAL ,
+			         	true , true , false);
+				JFreeChart xylineChartT = ChartFactory.createXYLineChart(
+			         	"total time in crossing for train"+i,
+			         	"total time in crossing" ,
+			         	"time for car" ,
+			         	dataW,
+			         	PlotOrientation.VERTICAL ,
+			         	true , true , false);
+			        if(i%2==0) {
+					xylineChartD.setBackgroundPaint(Color.white);
+					xylineChartV.setBackgroundPaint(Color.gray);
+					xylineChartW.setBackgroundPaint(Color.white);
+					xylineChartT.setBackgroundPaint(Color.gray);
+			        }	
+				else {
+					xylineChartD.setBackgroundPaint(Color.gray);
+					xylineChartV.setBackgroundPaint(Color.white);
+					xylineChartW.setBackgroundPaint(Color.gray);
+					xylineChartT.setBackgroundPaint(Color.white);
+				}
+				
+				ChartPanel panelD = new ChartPanel(xylineChartD);
+				frame.add(panelD);
+				ChartPanel panelV = new ChartPanel(xylineChartV);
+				frame.add(panelV);
+				ChartPanel panelW = new ChartPanel(xylineChartW);
+				frame.add(panelW);
+				ChartPanel panelT = new ChartPanel(xylineChartT);
+				frame.add(panelT);
 			}
-			final XYSeries serieV = new XYSeries ( "Car" + (carsId.get(i).size()-1) );
-			dataV.addSeries(serieV);
-			final XYSeries serieW = new XYSeries ( "Car" + (carsId.get(i).size()-1) );
-			dataW.addSeries(serieW);
-			final XYSeries serieT = new XYSeries ( "Car" + (carsId.get(i).size()-1) );
-			dataT.addSeries(serieT);
 			
+			frame.pack();
+			frame.setVisible(false);
+			frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 			
-			JFreeChart xylineChartD = ChartFactory.createXYLineChart(
-		         	"interdistance for train"+i,
-		         	"time" ,
-		         	"distance from previous car" ,
-		         	dataD,
-		         	PlotOrientation.VERTICAL ,
-		         	true , true , false);
-			JFreeChart xylineChartV = ChartFactory.createXYLineChart(
-		         	"speed for train"+i,
-		         	"time" ,
-		         	"speed of car" ,
-		         	dataV,
-		         	PlotOrientation.VERTICAL ,
-		         	true , true , false);
-			JFreeChart xylineChartW = ChartFactory.createXYLineChart(
-		         	"waiting time for train"+i,
-		         	"waiting time" ,
-		         	"time for car" ,
-		         	dataW,
-		         	PlotOrientation.VERTICAL ,
-		         	true , true , false);
-			JFreeChart xylineChartT = ChartFactory.createXYLineChart(
-		         	"total time in crossing for train"+i,
-		         	"total time in crossing" ,
-		         	"time for car" ,
-		         	dataW,
-		         	PlotOrientation.VERTICAL ,
-		         	true , true , false);
-		        if(i%2==0) {
-				xylineChartD.setBackgroundPaint(Color.white);
-				xylineChartV.setBackgroundPaint(Color.gray);
-				xylineChartW.setBackgroundPaint(Color.white);
-				xylineChartT.setBackgroundPaint(Color.gray);
-		        }	
-			else {
-				xylineChartD.setBackgroundPaint(Color.gray);
-				xylineChartV.setBackgroundPaint(Color.white);
-				xylineChartW.setBackgroundPaint(Color.gray);
-				xylineChartT.setBackgroundPaint(Color.white);
-			}
-			
-			ChartPanel panelD = new ChartPanel(xylineChartD);
-			frame.add(panelD);
-			ChartPanel panelV = new ChartPanel(xylineChartV);
-			frame.add(panelV);
-			ChartPanel panelW = new ChartPanel(xylineChartW);
-			frame.add(panelW);
-			ChartPanel panelT = new ChartPanel(xylineChartT);
-			frame.add(panelT);
+			init = true;
 		}
+		if(init) {
 		
-		frame.pack();
-		frame.setVisible(false);
-		frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+			/*Here we simulate the environment with beaconised's crossings
+			  When a train's first car enter it's range, we send a message to the train (upcoming crossing).
+			  
+			  To avoid sending the message every turn until the car passed the crossing,
+			  we keep a list of train by crossing. To update that list we check if the last car passed the crossing
+			  At that time we also inform the train, so it can return to usual speed and distance orders
+			  
+			  IMPROVEMENT : IRL only cars have sensors, so the first car should recieve the event,
+			  and send it to its train, probably
+			  */
 		
-		
-		/*Here we simulate the environment with beaconised's crossings
-		  When a train's first car enter it's range, we send a message to the train (upcoming crossing).
-		  
-		  To avoid sending the message every turn until the car passed the crossing,
-		  we keep a list of train by crossing. To update that list we check if the last car passed the crossing
-		  At that time we also inform the train, so it can return to usual speed and distance orders
-		  
-		  IMPROVEMENT : IRL only cars have sensors, so the first car should recieve the event,
-		  and send it to its train, probably
-		  */
-		while(true) {
 			List<String> groups;
 			OrientedPoint carPos;
 			String carGroup;
