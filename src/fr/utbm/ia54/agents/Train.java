@@ -85,16 +85,16 @@ public class Train extends AbstractAgent {
 
 	protected void doIt() {
 		
-
-    	System.out.println("Hello i'm train");
+    	//System.out.println("Hello i'm train");
     	
-			getNewMessages();
-			/*All behaviours in train are related to communication, 
-			
-			TODO deal with multiple train
-			TODO deal with train following eachother
-			*/
-			//pause(Const.PAS);
+		getNewMessages();
+		
+		/*All behaviours in train are related to communication, 
+		
+		TODO deal with multiple train
+		TODO deal with train following eachother
+		*/
+		//pause(Const.PAS);
 	}
 
 	@Override

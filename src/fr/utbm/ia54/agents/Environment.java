@@ -77,7 +77,7 @@ public class Environment extends AbstractAgent {
 
     protected void doIt() {
     	
-    	System.out.println("Hello i'm env");
+    	//System.out.println("Hello i'm env");
 		
 		if(!init) {
 			map = new HashMap<OrientedPoint, List<String>>(); // List of trains by crossing
