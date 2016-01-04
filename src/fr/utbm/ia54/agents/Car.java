@@ -9,10 +9,12 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 //import java.util.function.Function;
+import java.util.logging.Level;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 
+import madkit.kernel.AbstractAgent;
 import madkit.kernel.Agent;
 import madkit.kernel.Message;
 import madkit.message.ObjectMessage;
@@ -28,7 +30,7 @@ import fr.utbm.ia54.utils.RotateLabel;
  * Car class.
  * @author Alexis Florian
  */
-public class Car extends Agent {
+public class Car extends AbstractAgent {
 
 	private OrientedPoint pos;
 	private OrientedPoint tmpPos;
@@ -55,19 +57,60 @@ public class Car extends Agent {
 	private String printings = new String();
 	
 	
+	
+	
+
+	private boolean live = true;
+	
+	
+	private float distance = 0;
+	private float slowD = 0;
+	private float toSlowV = 0;
+	private int place =0;
+	
+	private String closerInTrain = null;
+	private OrientedPoint closerPosInTrain = null;
+	private float toSlowVInTrain;
+	private String closerOutTrain = null;
+	private OrientedPoint closerPosOutTrain = null;
+	private float toSlowVOutTrain;
+	
+	private Boolean isInTrain = true;
+	
+	private Boolean messageToCar;
+	
+	private ArrayList<OrientedPoint> crossings;
+	private OrientedPoint cross = null;
+	private Boolean priority = false;
+	
+	private HashMap<String, OrientedPoint> neighbours = new HashMap<String, OrientedPoint>();
+	private HashMap<String, OrientedPoint> emergencies = new HashMap<String, OrientedPoint>();
+	private HashMap<String, OrientedPoint> tmpKnownCars = new HashMap<String, OrientedPoint>();
+	
+	
+	
 	/**
 	 * This is the first activated behavior in the life cycle of a MaDKit agent.
 	 */
 	@Override
 	protected void activate() {
+		//setLogLevel(Level.FINEST); // Madkit print log
+		
 		carPath = MainProgram.getCarPath();
 		numTrain = getNumTrain(group);
-		pos = carPath.getStart(numTrain);
+		
+		// Old spawn
+		//pos = carPath.getStart(numTrain);
+		
+		// Set car position regarding it's order in train
+		pos = carPath.getNextPoint(carPath.getStart(numTrain), Const.NB_CAR_BY_TRAIN*50 - (position+1)*50, numTrain);
 
 		requestRole(Const.MY_COMMUNITY,Const.CAR_ROLE,Const.CAR_ROLE);
 		
 		requestRole(Const.MY_COMMUNITY,group,Const.CAR_ROLE);
 		requestRole(Const.MY_COMMUNITY,group, this.getNetworkID());
+		
+		requestRole(Const.MY_COMMUNITY,Const.SIMU_GROUP,Const.CAR_ROLE);
 		
 		addCar();
 		
@@ -87,304 +130,283 @@ public class Car extends Agent {
 	/**
 	 * This is the second behavior which is activated, i.e. when activate ends.
 	 * It actually implements the life of the agent.
-	 * It is usually a while true loop.
 	 */
-	@Override
-	protected void live() {
-		boolean live = true;
+	protected void doIt() {
+		
+    	//System.out.println("Hello i'm car");
 		
 		
-		float distance = 0;
-		float slowD = 0;
-		float toSlowV = 0;
-		int place =0;
+		closerInTrain = new String();
+		closerOutTrain = new String();
+		toSlowVInTrain = 0;
+		toSlowVOutTrain = 0;
+		newV = 0;
+		distance = 0;
+		slowD = 0;
+		toSlowV = 0;
+		place = 10;
+		messageToCar = null;
 		
-		String closerInTrain = null;
-		OrientedPoint closerPosInTrain = null;
-		float toSlowVInTrain;
-		String closerOutTrain = null;
-		OrientedPoint closerPosOutTrain = null;
-		float toSlowVOutTrain;
+		//if(pos.getSpeed() == 0)
+		//	System.out.println("that's me stopped : " + this.getNetworkID());
 		
-		Boolean isInTrain = true;
+		// we treat all new messages
+		getNewMessages();
+		printings += "I'm " + this.getName() + ", car " + position + " of train " + numTrain + ". My color is " + Const.CAR_COLOR[carColor] + ".\n";
+		printings += this.getNetworkID() + "\n" + this.getSimpleNetworkID() + "\n";
+		printings += "Speed to reach is " + vToReach + ", and safeD is " + safeD + "\n";
 		
-		Boolean messageToCar;
 		
-		ArrayList<OrientedPoint> crossings;
-		OrientedPoint cross = null;
-		Boolean priority = false;
-		
-		HashMap<String, OrientedPoint> neighbours = new HashMap<String, OrientedPoint>();
-		HashMap<String, OrientedPoint> emergencies = new HashMap<String, OrientedPoint>();
-		HashMap<String, OrientedPoint> tmpKnownCars = new HashMap<String, OrientedPoint>();
-		
-		// we drive for a while
-		while(live) {
-			closerInTrain = new String();
-			closerOutTrain = new String();
-			toSlowVInTrain = 0;
-			toSlowVOutTrain = 0;
-			newV = 0;
-			distance = 0;
-			slowD = 0;
-			toSlowV = 0;
-			place = 10;
-			messageToCar = null;
-			
-			//if(pos.getSpeed() == 0)
-			//	System.out.println("that's me stopped : " + this.getNetworkID());
-			
-			// we treat all new messages
-			getNewMessages();
-			printings += "I'm " + this.getName() + ", car " + position + " of train " + numTrain + ". My color is " + Const.CAR_COLOR[carColor] + ".\n";
-			printings += this.getNetworkID() + "\n" + this.getSimpleNetworkID() + "\n";
-			printings += "Speed to reach is " + vToReach + ", and safeD is " + safeD + "\n";
-			
-			
-/*OPTIMAL SITUATION ***************************************************/
-			// adapt speed according to speed objectives and ACC-eleration and DECC-eleration
-			if(pos.getSpeed() == vToReach) {
-				newV = (float) pos.getSpeed();
-			}
+		/*OPTIMAL SITUATION ***************************************************/
+		// adapt speed according to speed objectives and ACC-eleration and DECC-eleration
+		if(pos.getSpeed() == vToReach) {
+			newV = (float) pos.getSpeed();
+		}
+		else {
+			if(pos.getSpeed() <vToReach) {
+				newV = (float) (pos.getSpeed() + (Const.ACC * (Const.PAS/1000.f)));
+				// we have accelerated enough to reach the desired speed
+				if(newV > vToReach) {
+					newV = vToReach;
+				}
+			} 
 			else {
-				if(pos.getSpeed() <vToReach) {
-					newV = (float) (pos.getSpeed() + (Const.ACC * (Const.PAS/1000.f)));
-					// we have accelerated enough to reach the desired speed
-					if(newV > vToReach) {
-						newV = vToReach;
-					}
-				} 
-				else {
-					newV = (float) (pos.getSpeed() - (Const.DECC * (Const.PAS/1000.f)));
-					// we have deccelerated enough to reach the desired speed
-					if(newV < vToReach) {
-						newV = vToReach;
-					}
+				newV = (float) (pos.getSpeed() - (Const.DECC * (Const.PAS/1000.f)));
+				// we have deccelerated enough to reach the desired speed
+				if(newV < vToReach) {
+					newV = vToReach;
 				}
 			}
+		}
+		
+		distance = newV*(Const.PAS/1000.f);
+		tmpPos = carPath.getNextPoint(pos, distance, numTrain);
+		tmpKnownCars = new HashMap<String, OrientedPoint>();
+		printings += "Actual speed : "+ pos.speed + "\n";
+		printings += "Optimal situation\nnewV = " + newV + "\n";
+		
+		/* BACK TO REALITY ****************************************/
+		neighbours = inRange(tmpPos, seeD, null);
+		tmpKnownCars.putAll(neighbours);
+		
+		if(neighbours != null && !neighbours.isEmpty()) {
+							
+			/* EMERGENCIES **********************************************************/
+			emergencies = inRange(tmpPos, safeD, neighbours);
+			crossings = carPath.getCrossingNear(tmpPos, seeD);
 			
-			distance = newV*(Const.PAS/1000.f);
-			tmpPos = carPath.getNextPoint(pos, distance, numTrain);
-			tmpKnownCars = new HashMap<String, OrientedPoint>();
-			printings += "Actual speed : "+ pos.speed + "\n";
-			printings += "Optimal situation\nnewV = " + newV + "\n";
+			/* clean emergencies from conflicts situations
+			IF car is in another train AND out of the cross
+				IF no priority defined
+					define priority
+				IF priority to us OR we are in the crossing already
+					remove car from the list emergencies
+					(& from neighbours ?!)
+			IF car in emergencies, we stop the car as soon as possible
+			END-IFS*/
 			
-/* BACK TO REALITY ****************************************/
-			neighbours = inRange(tmpPos, seeD, null);
-			tmpKnownCars.putAll(neighbours);
+			printings += "Cars in emergencies : " + emergencies + "\n";
 			
-			if(neighbours != null && !neighbours.isEmpty()) {
-								
-/* EMERGENCIES **********************************************************/
-				emergencies = inRange(tmpPos, safeD, neighbours);
-				crossings = carPath.getCrossingNear(tmpPos, seeD);
-				
-				/* clean emergencies from conflicts situations
-				IF car is in another train AND out of the cross
-					IF no priority defined
-						define priority
-					IF priority to us OR we are in the crossing already
-						remove car from the list emergencies
-						(& from neighbours ?!)
-				IF car in emergencies, we stop the car as soon as possible
-				END-IFS*/
-				
-				printings += "Cars in emergencies : " + emergencies + "\n";
-				
-				if(emergencies != null && !emergencies.isEmpty()) {
-					Iterator<String> itEmr = emergencies.keySet().iterator();
-					List<String> tmpList = new ArrayList<String>();
-					String carEmr;
-					OrientedPoint carPosEmr;
-					while(!emergencies.isEmpty() && itEmr.hasNext()) {
-						carEmr = itEmr.next();
-						carPosEmr = emergencies.get(carEmr);
-						for(OrientedPoint tmpCross : crossings) {
-							printings += "Other car is tested, its "+!Environment.isInMyTrain(this.getNetworkID(), carEmr) +" AND "+Functions.isOutside(carPosEmr, tmpCross);
-							if (!Environment.isInMyTrain(this.getNetworkID(), carEmr) && Functions.isOutside(carPosEmr, tmpCross)) {
-								printings += "not in my train AND outside the crossing;\n";
-								if((definePriority(carEmr,carPosEmr,tmpCross) /*&& carPosEmr.getSpeed()==0.0*//*|| Functions.isAfter(carPosEmr, tmpCross)*/) || Functions.manhattan(tmpPos,tmpCross)<Const.CAR_SIZE) {
-									tmpList.add(carEmr);
-									printings += "We remove " + carEmr + " from emergencies, for reasons \n " + getPriority(carEmr);
-									printings += "\n " + (Functions.manhattan(tmpPos,tmpCross)<Const.CAR_SIZE) + "\n";
-								}
-								printings += "We do not remove " + carEmr + " from emergencies, for reasons \n " + getPriority(carEmr);
-								printings += " OR " + (Functions.manhattan(tmpPos,tmpCross)<Const.CAR_SIZE) + "\n";
+			if(emergencies != null && !emergencies.isEmpty()) {
+				Iterator<String> itEmr = emergencies.keySet().iterator();
+				List<String> tmpList = new ArrayList<String>();
+				String carEmr;
+				OrientedPoint carPosEmr;
+				while(!emergencies.isEmpty() && itEmr.hasNext()) {
+					carEmr = itEmr.next();
+					carPosEmr = emergencies.get(carEmr);
+					for(OrientedPoint tmpCross : crossings) {
+						printings += "Other car is tested, its "+!Environment.isInMyTrain(this.getNetworkID(), carEmr) +" AND "+Functions.isOutside(carPosEmr, tmpCross);
+						if (!Environment.isInMyTrain(this.getNetworkID(), carEmr) && Functions.isOutside(carPosEmr, tmpCross)) {
+							printings += "not in my train AND outside the crossing;\n";
+							if((definePriority(carEmr,carPosEmr,tmpCross) /*&& carPosEmr.getSpeed()==0.0*//*|| Functions.isAfter(carPosEmr, tmpCross)*/) || Functions.manhattan(tmpPos,tmpCross)<Const.CAR_SIZE) {
+								tmpList.add(carEmr);
+								printings += "We remove " + carEmr + " from emergencies, for reasons \n " + getPriority(carEmr);
+								printings += "\n " + (Functions.manhattan(tmpPos,tmpCross)<Const.CAR_SIZE) + "\n";
 							}
-							else if (!Environment.isInMyTrain(this.getNetworkID(), carEmr) && Functions.manhattan(tmpPos,tmpCross)<Const.CAR_SIZE) {
-								System.out.println("It seems like we have a crash !\n car : " + this.getNetworkID() + " and " + carEmr);
-								System.out.println(" out Priority over : "+carEmr+" is: " + definePriority(carEmr,carPosEmr,tmpCross));
-								printings += "Potential CRASH between car : " + this.getNetworkID() + " and " + carEmr;
-								/*if(Functions.manhattan(tmpPos,tmpCross)<Functions.manhattan(carPosEmr,tmpCross)) {
-									printings += "exceptionnaly we force out";
-									tmpList.add(carEmr);
-								}*/
-							}
+							printings += "We do not remove " + carEmr + " from emergencies, for reasons \n " + getPriority(carEmr);
+							printings += " OR " + (Functions.manhattan(tmpPos,tmpCross)<Const.CAR_SIZE) + "\n";
+						}
+						else if (!Environment.isInMyTrain(this.getNetworkID(), carEmr) && Functions.manhattan(tmpPos,tmpCross)<Const.CAR_SIZE) {
+							System.out.println("It seems like we have a crash !\n car : " + this.getNetworkID() + " and " + carEmr);
+							System.out.println(" out Priority over : "+carEmr+" is: " + definePriority(carEmr,carPosEmr,tmpCross));
+							printings += "Potential CRASH between car : " + this.getNetworkID() + " and " + carEmr;
+							/*if(Functions.manhattan(tmpPos,tmpCross)<Functions.manhattan(carPosEmr,tmpCross)) {
+								printings += "exceptionnaly we force out";
+								tmpList.add(carEmr);
+							}*/
 						}
 					}
-					for(String i : tmpList) {
-						emergencies.remove(i);
-						neighbours.remove(i);
-					}
 				}
-				
-				
-				if(emergencies != null && !emergencies.isEmpty()) {
-					newV = (float) (pos.getSpeed() - (Const.DECC * (Const.PAS/1000.f)));
-					distance = newV*(Const.PAS/1000.f);
-					tmpPos = carPath.getNextPoint(pos, distance, numTrain);
-					printings += "Emergencies : on essaie de s'arreter tant bien que mal.\n"; 
-				} 
-				else {
-/* NOT MEMERGENCIES, BUT WATCHLIST **********************************/
+				for(String i : tmpList) {
+					emergencies.remove(i);
+					neighbours.remove(i);
+				}
+			}
+			
+			
+			if(emergencies != null && !emergencies.isEmpty()) {
+				newV = (float) (pos.getSpeed() - (Const.DECC * (Const.PAS/1000.f)));
+				distance = newV*(Const.PAS/1000.f);
+				tmpPos = carPath.getNextPoint(pos, distance, numTrain);
+				printings += "Emergencies : on essaie de s'arreter tant bien que mal.\n"; 
+			} 
+			else {
+				/* NOT MEMERGENCIES, BUT WATCHLIST **********************************/
 				//TODO multi(>2) trains, not operationnal at ALL for that. 
 
-					printings += "No emergencies, we go for neighbors.\n"; 
-					
-					//search in neighbors for closer of our and other train.
-					Set<String> keys = neighbours.keySet();
-					Iterator<String> it = keys.iterator();
-					String tmpNeighbour;
-					OrientedPoint closerPos;
-					
-					while ((closerInTrain.isEmpty() || closerOutTrain.isEmpty()) && it.hasNext()) {
-						tmpNeighbour = it.next();
-						isInTrain = Environment.isInMyTrain(this.getNetworkID(), tmpNeighbour);
-						if(closerInTrain.isEmpty() && isInTrain) {
-							closerInTrain = tmpNeighbour;//Functions.closest(neighbours, tmpPos);
+				printings += "No emergencies, we go for neighbors.\n"; 
+				
+				//search in neighbors for closer of our and other train.
+				Set<String> keys = neighbours.keySet();
+				Iterator<String> it = keys.iterator();
+				String tmpNeighbour;
+				OrientedPoint closerPos;
+				
+				while ((closerInTrain.isEmpty() || closerOutTrain.isEmpty()) && it.hasNext()) {
+					tmpNeighbour = it.next();
+					isInTrain = Environment.isInMyTrain(this.getNetworkID(), tmpNeighbour);
+					if(closerInTrain.isEmpty() && isInTrain) {
+						closerInTrain = tmpNeighbour;//Functions.closest(neighbours, tmpPos);
+						closerPosInTrain = neighbours.get(closerInTrain);	
+
+						printings += "We have a friend in front.\n"; 
+					}
+					else if (isInTrain) {
+						if (Functions.manhattanCar(tmpPos, closerPosInTrain) > Functions.manhattanCar(tmpPos, neighbours.get(tmpNeighbour))) {
+							closerInTrain = tmpNeighbour;
 							closerPosInTrain = neighbours.get(closerInTrain);	
 
-							printings += "We have a friend in front.\n"; 
+							printings += "We have a new friend in front.\n"; 
 						}
-						else if (isInTrain) {
-							if (Functions.manhattanCar(tmpPos, closerPosInTrain) > Functions.manhattanCar(tmpPos, neighbours.get(tmpNeighbour))) {
-								closerInTrain = tmpNeighbour;
-								closerPosInTrain = neighbours.get(closerInTrain);	
+					}
+					else if (closerOutTrain.isEmpty() && !isInTrain) {
+						closerPos = neighbours.get(tmpNeighbour);
+						// we make sure that the two cars are heading for a common crossing
+						if(Math.abs(closerPos.getOrientation()-pos.getOrientation()) == Math.toRadians(90) 
+							|| Math.abs(closerPos.getOrientation()-pos.getOrientation()) == Math.toRadians(270)) {
+							
+							
+							Iterator<OrientedPoint> it2 = crossings.iterator();
+							while(it2.hasNext() && closerOutTrain == null) {
+								cross = it2.next();
+								if((closerPos.getX() == cross.getX()) && (tmpPos.getY() == cross.getY())) {
+									
+									if((closerPos.getY()<cross.getY() && closerPos.getOrientation() == Math.toRadians(180))||
+										(closerPos.getY()>cross.getY() && closerPos.getOrientation() == Math.toRadians(0))) {
+										closerOutTrain = Functions.closest(neighbours, tmpPos);
+										closerPosOutTrain = neighbours.get(closerOutTrain);
 
-								printings += "We have a new friend in front.\n"; 
-							}
-						}
-						else if (closerOutTrain.isEmpty() && !isInTrain) {
-							closerPos = neighbours.get(tmpNeighbour);
-							// we make sure that the two cars are heading for a common crossing
-							if(Math.abs(closerPos.getOrientation()-pos.getOrientation()) == Math.toRadians(90) 
-								|| Math.abs(closerPos.getOrientation()-pos.getOrientation()) == Math.toRadians(270)) {
-								
-								
-								Iterator<OrientedPoint> it2 = crossings.iterator();
-								while(it2.hasNext() && closerOutTrain == null) {
-									cross = it2.next();
-									if((closerPos.getX() == cross.getX()) && (tmpPos.getY() == cross.getY())) {
-										
-										if((closerPos.getY()<cross.getY() && closerPos.getOrientation() == Math.toRadians(180))||
-											(closerPos.getY()>cross.getY() && closerPos.getOrientation() == Math.toRadians(0))) {
-											closerOutTrain = Functions.closest(neighbours, tmpPos);
-											closerPosOutTrain = neighbours.get(closerOutTrain);
+										printings += "We have a car from another train in front.\n"; 
+									}
+								} 
+								else if ((closerPos.getY() == cross.getY()) && (tmpPos.getX() == cross.getX())) {
+									if((closerPos.getX()<cross.getX() && closerPos.getOrientation() == Math.toRadians(90))||
+										(closerPos.getX()>cross.getX() && closerPos.getOrientation() == Math.toRadians(270))) {
+										closerOutTrain = Functions.closest(neighbours, tmpPos);
+										closerPosOutTrain = neighbours.get(closerOutTrain);
 
-											printings += "We have a car from another train in front.\n"; 
-										}
-									} 
-									else if ((closerPos.getY() == cross.getY()) && (tmpPos.getX() == cross.getX())) {
-										if((closerPos.getX()<cross.getX() && closerPos.getOrientation() == Math.toRadians(90))||
-											(closerPos.getX()>cross.getX() && closerPos.getOrientation() == Math.toRadians(270))) {
-											closerOutTrain = Functions.closest(neighbours, tmpPos);
-											closerPosOutTrain = neighbours.get(closerOutTrain);
-
-											printings += "We have a car from another train in front.\n";
-										}
+										printings += "We have a car from another train in front.\n";
 									}
 								}
 							}
 						}
 					}
+				}
+				
+				int newD = 0;
+				double dToCross;
+				
+				if (!closerInTrain.isEmpty()) {
 					
-					int newD = 0;
-					double dToCross;
-					
-					if (!closerInTrain.isEmpty()) {
+					if(knownCars.containsKey(closerInTrain)) {
+						newD = Functions.manhattanCar(neighbours.get(closerInTrain), tmpPos);
+						float diffV = (float) (newV - neighbours.get(closerInTrain).getSpeed());
 						
-						if(knownCars.containsKey(closerInTrain)) {
-							newD = Functions.manhattanCar(neighbours.get(closerInTrain), tmpPos);
-							float diffV = (float) (newV - neighbours.get(closerInTrain).getSpeed());
+						
+						//control of speed
+						//and follow D
+						if(diffV > 0 && newD < crossingD) {
+							toSlowVInTrain = (float) (pos.getSpeed() - (Const.DECC * (Const.PAS/1000.f)));
+						}
+						else if(diffV > 0) {
 							
+							float margeT = newD-crossingD/newV;
 							
-							//control of speed
-							//and follow D
-							if(diffV > 0 && newD < crossingD) {
+							int nbEtapes = (int) (margeT/Const.PAS);
+							if(nbEtapes <=0) {
+								nbEtapes=1;
+							}
+							/*
+							 * Method 2 : We continusly brake to get to Vcar-1 at safeD
+							 * we slow a dV each turn (aprox)
+							 */
+							toSlowVInTrain = diffV/(float)nbEtapes;
+							
+						}
+						else if(newD < crossingD) {
+							//we consider keeping speed difference in 5 turns, if we do get away enough during this time, no brakes.
+							float diffD = diffV*5*Const.PAS;
+							if(diffD + newD < crossingD) {
+								// slow down not enough
 								toSlowVInTrain = (float) (pos.getSpeed() - (Const.DECC * (Const.PAS/1000.f)));
-							}
-							else if(diffV > 0) {
-								
-								float margeT = newD-crossingD/newV;
-								
-								int nbEtapes = (int) (margeT/Const.PAS);
-								if(nbEtapes <=0) {
-									nbEtapes=1;
-								}
-								/*
-								 * Method 2 : We continusly brake to get to Vcar-1 at safeD
-								 * we slow a dV each turn (aprox)
-								 */
-								toSlowVInTrain = diffV/(float)nbEtapes;
-								
-							}
-							else if(newD < crossingD) {
-								//we consider keeping speed difference in 5 turns, if we do get away enough during this time, no brakes.
-								float diffD = diffV*5*Const.PAS;
-								if(diffD + newD < crossingD) {
-									// slow down not enough
-									toSlowVInTrain = (float) (pos.getSpeed() - (Const.DECC * (Const.PAS/1000.f)));
-								}
-								else {
-									toSlowVInTrain = 0;
-								}
 							}
 							else {
 								toSlowVInTrain = 0;
 							}
-							
+						}
+						else {
+							toSlowVInTrain = 0;
 						}
 						
 					}
-						
 					
-					if(!closerOutTrain.isEmpty()) {
-						newD = Functions.manhattanCar(cross, tmpPos);	
-						dToCross = Functions.manhattan(neighbours.get(closerOutTrain), cross)+Const.CAR_SIZE;
-						
-						priority = definePriority(closerOutTrain,neighbours.get(closerOutTrain),cross);
-						
-						if(!priority) {
-							/*do we have to reduce speed ?
-							 YES if the other car won't get out of the crossing before we enter it
-							 	OUR time to get to the crossing > HER time to get over the crossing
-							 
-							 */
-							float tpsOtherCar = (float) (dToCross/neighbours.get(closerOutTrain).getSpeed());
-							if (tpsOtherCar > newD/newV) {
-								//if so by how much ?
-								toSlowVOutTrain =  newD/(tpsOtherCar - newD/newV);
-							}
-							else
-								//TODO : worry about next car to cross over ?
-								toSlowVOutTrain = 0;
+				}
+					
+				
+				if(!closerOutTrain.isEmpty()) {
+					newD = Functions.manhattanCar(cross, tmpPos);	
+					dToCross = Functions.manhattan(neighbours.get(closerOutTrain), cross)+Const.CAR_SIZE;
+					
+					priority = definePriority(closerOutTrain,neighbours.get(closerOutTrain),cross);
+					
+					if(!priority) {
+						/*do we have to reduce speed ?
+						 YES if the other car won't get out of the crossing before we enter it
+						 	OUR time to get to the crossing > HER time to get over the crossing
+						 
+						 */
+						float tpsOtherCar = (float) (dToCross/neighbours.get(closerOutTrain).getSpeed());
+						if (tpsOtherCar > newD/newV) {
+							//if so by how much ?
+							toSlowVOutTrain =  newD/(tpsOtherCar - newD/newV);
 						}
 						else
 							//TODO : worry about next car to cross over ?
 							toSlowVOutTrain = 0;
 					}
-					
-					//We now now how much we need to slow down for each situation. We take care of the most important one
-					toSlowV = (toSlowVOutTrain < toSlowVInTrain) ? toSlowVInTrain : toSlowVOutTrain ;
-					printings += "cars from the neibghors have us make slowing down : " + toSlowV + ".\n";
-					
-					knownCars = tmpKnownCars;				
-				}//no emergencies
-			}//no neighbours
-/* APPLICATION OF WHAT IS PLANNED ********************/
-			executingRun(newV, toSlowV, distance, tmpPos);
-			pause(Const.PAS);
-		}//while live
+					else
+						//TODO : worry about next car to cross over ?
+						toSlowVOutTrain = 0;
+				}
+				
+				//We now now how much we need to slow down for each situation. We take care of the most important one
+				toSlowV = (toSlowVOutTrain < toSlowVInTrain) ? toSlowVInTrain : toSlowVOutTrain ;
+				printings += "cars from the neibghors have us make slowing down : " + toSlowV + ".\n";
+				
+				knownCars = tmpKnownCars;				
+			}//no emergencies
+		}//no neighbours
+		/* APPLICATION OF WHAT IS PLANNED ********************/
+		executingRun(newV, toSlowV, distance, tmpPos);
+		//pause(Const.PAS);
+		
+		
+		//if(pos.speed == 0)
+			//System.out.println("Car stopped");
+		
+		//System.out.println("Speed : " + pos.speed);
+		System.out.println(this.getNetworkID() + " - speed : " + pos.speed);					
 	}
 
 
@@ -412,7 +434,7 @@ public class Car extends Agent {
 		//icone = new RotateLabel(car, carId);
 		icone = new RotateLabel(car, carId+","+Integer.toString(position));
    		icone.setBounds(0,0,Const.CAR_SIZE, Const.CAR_SIZE);
-   		icone.setLocation(pos.x, pos.y);
+   		icone.setLocation((int) pos.x, (int) pos.y);
    		icone.setAngle(pos.getAngle());
    		
    		/* Add the car to the frame */
@@ -424,7 +446,7 @@ public class Car extends Agent {
 	 * @param tmpPos
 	 */
 	private void moveTo(OrientedPoint tmpPos) {
-		icone.setLocation(tmpPos.x, tmpPos.y);
+		icone.setLocation((int) tmpPos.x, (int) tmpPos.y);
 		icone.setAngle(tmpPos.orientation);
 	}
 	
@@ -577,8 +599,13 @@ public class Car extends Agent {
 		HashMap<String, OrientedPoint> sendPos = new HashMap<String, OrientedPoint>();
 		sendPos.put(this.getNetworkID(), tmpPos);
 		sendMessage(Const.MY_COMMUNITY, group, Const.ENV_ROLE, new ObjectMessage<HashMap<String, OrientedPoint>>(sendPos));
-		pos = tmpPos; 
-		pos.setSpeed(newV);
+
+		tmpPos.setSpeed(newV);
+		
+		if(tmpPos.speed == 0)
+			System.out.println("Car stoped");
+		
+		pos = tmpPos;
 		
 		if(printingTurn)
 			System.out.println(printings);

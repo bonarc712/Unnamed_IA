@@ -64,12 +64,12 @@ public class CarPath {
 						//if no needs to rotate
 						if(nextP.y + distance < p.y && nextP.orientation ==Math.PI) {
 							nextP = new OrientedPoint(nextP);
-							nextP.y = (int) (nextP.y + distance);
+							nextP.y = nextP.y + distance;
 							distance = 0;
 						} 
 						else if (nextP.y - distance > p.y && (nextP.orientation == Math.PI*2 || nextP.orientation == 0)) {
 							nextP = new OrientedPoint(nextP);
-							nextP.y = (int) (nextP.y - distance);
+							nextP.y = nextP.y - distance;
 							distance = 0;
 						// in case of arriving just on the point	
 						} 
@@ -87,12 +87,12 @@ public class CarPath {
 						// if no needs to rotate
 						if(nextP.x + distance < p.x && nextP.orientation == Math.PI/2) {
 							nextP = new OrientedPoint(nextP);
-							nextP.x =  (int) (nextP.x + distance);
+							nextP.x =  nextP.x + distance;
 							distance = 0;
 						}
 						else if (nextP.x - distance > p.x && nextP.orientation == Math.PI*3/2) {
 							nextP = new OrientedPoint(nextP);
-							nextP.x =  (int) (nextP.x - distance);
+							nextP.x =  nextP.x - distance;
 							distance = 0;
 							
 						// in case of arriving just on the point	

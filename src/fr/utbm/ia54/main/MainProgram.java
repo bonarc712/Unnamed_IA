@@ -9,6 +9,7 @@ import fr.utbm.ia54.agents.Train;
 import fr.utbm.ia54.consts.Const;
 import fr.utbm.ia54.gui.MainFrame;
 import fr.utbm.ia54.path.CarPath;
+import fr.utbm.ia54.scheduler.MyScheduler;
 import fr.utbm.ia54.utils.ReadXmlFile;
 import madkit.kernel.Agent;
 
@@ -16,7 +17,7 @@ import madkit.kernel.Agent;
  * Main class.
  * @author Alexis Florian
  */
-public class MainProgram extends Agent{
+public class MainProgram extends Agent {
 	
 	private static MainFrame mainFrame;
 	private static CarPath carPath;
@@ -34,7 +35,7 @@ public class MainProgram extends Agent{
 		
 		/* Build the path to follow by each train */
 		ReadXmlFile read = new ReadXmlFile();		
-		carPath.setPath(read.parse(new File(Const.RESOURCES_DIR+"/circuit4.xml")));
+		carPath.setPath(read.parse(new File(Const.RESOURCES_DIR+"/circuit8.xml")));
 		Const.NB_TRAIN = carPath.getPath().size();
 		carPath.generateCrossing();
 		
@@ -54,28 +55,31 @@ public class MainProgram extends Agent{
 		}
 		createGroup(Const.MY_COMMUNITY, Const.TRAIN_ROLE);
 		createGroup(Const.MY_COMMUNITY, Const.CAR_ROLE);
+
+		// 2 : create the scheduler
+		MyScheduler scheduler = new MyScheduler();
 		
-		// 2 : Create environment
+		// 3 : Create environment
         env = new Environment();
         launchAgent(env);
         mainFrame.getMyMenu().setEnvironnement(env);
         env.setMenu(mainFrame.getMyMenu());
 		
-        // 3 : Create trains 
+        // 4 : Create trains 
         Train[] trains = new Train[Const.NB_TRAIN];
 		for(int i=0; i<Const.NB_TRAIN;i++) {
 			trains[i] = new Train();
 			launchAgent(trains[i]);
-			pause(1000);
+			//pause(1000);
 		}
+		
+		// 5 : Launch Scheduler
+		launchAgent(scheduler);
 	}
 	
 
 	@Override
     protected void live() {
-		for(int i = 0; i<1 ; i++) {
-			pause(5000);
-		}
 	}
 	
 	@Override

@@ -18,7 +18,7 @@ public class Functions {
 	 * @param x
 	 * @return
 	 */
-	public static boolean between(int a, int b, int x) {
+	public static boolean between(double a, double b, double x) {
 		if(a<=b) {
 			if(x>=a && x<=b) {
 				return true;
@@ -38,7 +38,7 @@ public class Functions {
 	 * @return
 	 */
 	public static int manhattanCar(OrientedPoint a, OrientedPoint b) {
-		int distance = Math.abs(a.x-b.x) + Math.abs(a.y-b.y);
+		int distance = (int) (Math.abs(a.x-b.x) + Math.abs(a.y-b.y));
 
 		if(distance > Const.CAR_SIZE) {
 			distance -= Const.CAR_SIZE;
@@ -53,7 +53,7 @@ public class Functions {
 //		if(a != null && b != null)
 //			dist = Math.abs(a.x-b.x)+ Math.abs(a.y-b.y);
 //		return dist;
-		return Math.abs(a.x-b.x)+ Math.abs(a.y-b.y);
+		return (int) (Math.abs(a.x-b.x)+ Math.abs(a.y-b.y));
 	}
 	
 	public static String getCarId(String address) {
