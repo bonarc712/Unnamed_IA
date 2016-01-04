@@ -46,6 +46,9 @@ public class Car extends AbstractAgent {
 	private int position;
 	private int numTrain;
 	private int carColor;
+	private int timeSpentWaiting;
+	private int timeSpentCrossing;
+	private boolean isInCrossing;
 	
 	private RotateLabel icone;
 	private CarPath carPath;
@@ -119,6 +122,9 @@ public class Car extends AbstractAgent {
 		safeD = Const.CAR_SIZE;
 		seeD = 4*Const.CAR_SIZE;
 		crossingD = 2*safeD;
+		timeSpentWaiting = 0;
+		timeSpentCrossing = 0;
+		isInCrossing = false;
 		
 		knownCars = new HashMap<String, OrientedPoint>();
 		crossCars = new LinkedList<String>();
@@ -251,7 +257,7 @@ public class Car extends AbstractAgent {
 				printings += "Emergencies : on essaie de s'arreter tant bien que mal.\n"; 
 			} 
 			else {
-/* NOT MEMERGENCIES, BUT WATCHLIST **********************************/
+/* NOT EMERGENCIES, BUT WATCHLIST **********************************/
 			//TODO multi(>2) trains, not operationnal at ALL for that. 
 
 				printings += "No emergencies, we go for neighbors.\n"; 
@@ -509,6 +515,26 @@ public class Car extends AbstractAgent {
 					crossingD = Integer.valueOf(data[1]);
 					printings += " following distance is now " + crossingD + "\n";
 				}
+				
+				//The changedCrossingStatus messages determine if we entered or left a crossing.
+				else if (data[0].equals("changedCrossingStatus")) { 
+					String id = new String();
+					try {
+						id = data[2];
+					}
+					catch (Exception e) {
+						System.out.println("Error in messaging crossing status, we get the message" + message.getContent() + " from " + message.getSender() + " we are car : " + this.getNetworkID());
+					}
+					
+					if (id.equals(this.getNetworkID())) {
+						if (data[1].equals("true")) {
+							isInCrossing = true;
+						}
+						else {
+							isInCrossing = false;
+						}
+					}
+				}
 				else if (data[0].equals("printPriority")) {
 					String priorities = new String("Priorities of " + this.getName() + " (" + crossCarStatus.size() + ")");
 					System.out.println(priorities + crossCarStatus);
@@ -595,6 +621,20 @@ public class Car extends AbstractAgent {
 		}
 		
 		moveTo(tmpPos);
+		
+		if (isInCrossing) {
+			if (newV < 20) { //under 20 of speed is considered in waiting
+				timeSpentWaiting++;
+			}
+			timeSpentCrossing++;
+		}
+		else {
+			timeSpentWaiting = 0;
+			timeSpentCrossing = 0;
+		}
+		tmpPos.setTimeSpentCrossing(timeSpentCrossing);
+		tmpPos.setTimeSpentWaiting(timeSpentWaiting);
+		
 		HashMap<String, OrientedPoint> sendPos = new HashMap<String, OrientedPoint>();
 		sendPos.put(this.getNetworkID(), tmpPos);
 		sendMessage(Const.MY_COMMUNITY, group, Const.ENV_ROLE, new ObjectMessage<HashMap<String, OrientedPoint>>(sendPos));

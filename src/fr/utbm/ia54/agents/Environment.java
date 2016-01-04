@@ -1,10 +1,10 @@
 package fr.utbm.ia54.agents;
 
 import java.awt.Color;
-import java.awt.Frame;
 import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import javax.swing.JFrame;
@@ -23,7 +23,6 @@ import fr.utbm.ia54.path.CarPath;
 import fr.utbm.ia54.utils.Functions;
 import fr.utbm.ia54.utils.OrientedPoint;
 import madkit.kernel.AbstractAgent;
-import madkit.kernel.Agent;
 import madkit.kernel.AgentAddress;
 import madkit.kernel.Message;
 import madkit.message.ObjectMessage;
@@ -36,6 +35,7 @@ import madkit.message.StringMessage;
 public class Environment extends AbstractAgent {
 	private HashMap<String, OrientedPoint> positions;
 	private HashMap<String, AgentAddress> addresses;
+	private HashSet<String> carsInCrossing;
 	private static List<List<String>> carsId; // List of car's networkId (one list by train)
 	private Integer beaconRange;
 	private Menu menu;
@@ -49,7 +49,7 @@ public class Environment extends AbstractAgent {
 	private List<XYSeriesCollection> seriesInterD;
 	private List<XYSeriesCollection> seriesSpeed;
 	private List<XYSeriesCollection> seriesWaiting;
-	private List<XYSeriesCollection> seriesTotalCross;
+	private List<XYSeriesCollection> seriesCrossing;
 	
 	private int interdistance;
 	private Long runningT;
@@ -62,6 +62,7 @@ public class Environment extends AbstractAgent {
 		// Initialization
 		positions = new HashMap<String, OrientedPoint>();
 		addresses = new HashMap<String, AgentAddress>();
+		carsInCrossing = new HashSet<String>();
 		carsId = new ArrayList<List<String>>();
 		String group = new String();
 		beaconRange = 500;
@@ -101,7 +102,7 @@ public class Environment extends AbstractAgent {
 			seriesInterD = new ArrayList<XYSeriesCollection>();
 			seriesSpeed = new ArrayList<XYSeriesCollection>();
 			seriesWaiting = new ArrayList<XYSeriesCollection>();
-			seriesTotalCross = new ArrayList<XYSeriesCollection>();
+			seriesCrossing = new ArrayList<XYSeriesCollection>();
 			
 			
 			frame = new JFrame("Simulation Stats");
@@ -121,7 +122,7 @@ public class Environment extends AbstractAgent {
 				XYSeriesCollection dataW = new XYSeriesCollection( );
 				seriesWaiting.add(dataW);
 				XYSeriesCollection dataT = new XYSeriesCollection( );
-				seriesTotalCross.add(dataT);
+				seriesCrossing.add(dataT);
 				
 				for (int j = 0; j<carsId.get(i).size()-1; j++) {
 					final XYSeries serieD = new XYSeries ( "Car" + j + " and Car" + (j+1) );
@@ -166,7 +167,7 @@ public class Environment extends AbstractAgent {
 			         	"total time in crossing for train"+i,
 			         	"total time in crossing" ,
 			         	"time for car" ,
-			         	dataW,
+			         	dataT,
 			         	PlotOrientation.VERTICAL ,
 			         	true , true , false);
 			        if(i%2==0) {
@@ -246,6 +247,27 @@ public class Environment extends AbstractAgent {
 							groups.add(carGroup);
 							map.put(cross,groups);
 						}*/
+
+						//Check if a car entered or left the crossing
+						
+						for(int j=0; j<carsId.get(i).size(); ++j) {
+							carId = carsId.get(i).get(j);
+							carPos = positions.get(carId);
+							if (carsInCrossing.contains(carId)) {
+								if (crossPassed(carPos,cross)) {
+									StringMessage msgToCar = new StringMessage("changedCrossingStatus:false:" + carId);
+									sendMessage(Const.MY_COMMUNITY, carGroup, Const.CAR_ROLE, msgToCar);
+									carsInCrossing.remove(carId);
+								}
+							}
+							else {
+								if(Functions.manhattan(carPos,cross) < beaconRange && Functions.isBefore(carPos, cross)){
+									StringMessage msgToCar = new StringMessage("changedCrossingStatus:true:" + carId);
+									sendMessage(Const.MY_COMMUNITY, carGroup, Const.CAR_ROLE, msgToCar);
+									carsInCrossing.add(carId);
+								}
+							}
+						}
 						
 						carId = carsId.get(i).get(carsId.get(i).size()-1);
 						//carId = Functions.getCarId( carsId.get(i).get(carsId.get(i).size()-1) );
@@ -276,6 +298,9 @@ public class Environment extends AbstractAgent {
 							sendMessage(Const.MY_COMMUNITY, carGroup, Const.TRAIN_ROLE, msg);
 							groups.add(carGroup);
 							map.put(cross,groups);
+							StringMessage msgToCar = new StringMessage("changedCrossingStatus:true:" + carId);
+							sendMessage(Const.MY_COMMUNITY, carGroup, Const.CAR_ROLE, msgToCar);
+							carsInCrossing.add(carId);
 						}
 					}
 				}
@@ -284,9 +309,9 @@ public class Environment extends AbstractAgent {
 			if(runningT + Const.PAS <= System.currentTimeMillis()) {
 				runningT = System.currentTimeMillis();
 				
-				//Commenter/décommenter les lignes ci-bas selon que
-				//votre système fonctionne mieux avec les carsId de base
-				//ou les fonctions de Function.
+				//You can comment/uncomment the lines below whether
+				//your system works better with basic carsIds or the
+				//functions in Function.
 				for (int i = 0 ; i < carsId.size(); i++) {
 					for (int j = 0; j<carsId.get(i).size()-1; j++) {
 						interdistance = Functions.manhattan(positions.get( carsId.get(i).get(j) ),positions.get( carsId.get(i).get(j+1) ));
@@ -296,8 +321,12 @@ public class Environment extends AbstractAgent {
 						if(positions.get( carsId.get(i).get(j) ).getSpeed() == 0)
 							System.out.println("car stopped");
 						//seriesSpeed.get(i).getSeries(j).add(runningT.intValue(), positions.get( Functions.getCarId(carsId.get(i).get(j)) ).getSpeed());
+						seriesWaiting.get(i).getSeries(j).add(runningT.intValue(), positions.get( carsId.get(i).get(j) ).getTimeSpentWaiting());
+						seriesCrossing.get(i).getSeries(j).add(runningT.intValue(), positions.get( carsId.get(i).get(j) ).getTimeSpentCrossing());
 					}
 					seriesSpeed.get(i).getSeries(carsId.get(i).size()-1).add(runningT.intValue(), positions.get( carsId.get(i).get(carsId.get(i).size()-1) ).getSpeed());
+					seriesWaiting.get(i).getSeries(carsId.get(i).size()-1).add(runningT.intValue(), positions.get( carsId.get(i).get(carsId.get(i).size()-1) ).getTimeSpentWaiting());
+					seriesCrossing.get(i).getSeries(carsId.get(i).size()-1).add(runningT.intValue(), positions.get( carsId.get(i).get(carsId.get(i).size()-1) ).getTimeSpentCrossing());
 					if( positions.get( carsId.get(i).get(carsId.get(i).size()-1) ).getSpeed() == 0.0)
 						System.out.println("car stopped");
 					//seriesSpeed.get(i).getSeries(carsId.get(i).size()-1).add(runningT.intValue(), positions.get( Functions.getCarId(carsId.get(i).get(carsId.get(i).size()-1)) ).getSpeed());
