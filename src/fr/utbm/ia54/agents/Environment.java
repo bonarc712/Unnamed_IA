@@ -1,10 +1,10 @@
 package fr.utbm.ia54.agents;
 
 import java.awt.Color;
-import java.awt.Frame;
 import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import javax.swing.JFrame;
@@ -35,6 +35,7 @@ import madkit.message.StringMessage;
 public class Environment extends Agent{
 	private HashMap<String, OrientedPoint> positions;
 	private HashMap<String, AgentAddress> addresses;
+	private HashSet<String> carsInCrossing;
 	private static List<List<String>> carsId; // List of car's networkId (one list by train)
 	private Integer beaconRange;
 	private Menu menu;
@@ -48,6 +49,7 @@ public class Environment extends Agent{
 		// Initialization
 		positions = new HashMap<String, OrientedPoint>();
 		addresses = new HashMap<String, AgentAddress>();
+		carsInCrossing = new HashSet<String>();
 		carsId = new ArrayList<List<String>>();
 		String group = new String();
 		beaconRange = 500;
@@ -233,13 +235,19 @@ public class Environment extends Agent{
 						for(int j=0; j<carsId.get(i).size(); ++j) {
 							carId = carsId.get(i).get(j);
 							carPos = positions.get(carId);
-							if(Functions.manhattan(carPos,cross) < beaconRange && Functions.isBefore(carPos, cross)){
-								StringMessage msgToCar = new StringMessage("changedCrossingStatus:true:" + carId);
-								sendMessage(Const.MY_COMMUNITY, carGroup, Const.CAR_ROLE, msgToCar);
+							if (carsInCrossing.contains(carId)) {
+								if (crossPassed(carPos,cross)) {
+									StringMessage msgToCar = new StringMessage("changedCrossingStatus:false:" + carId);
+									sendMessage(Const.MY_COMMUNITY, carGroup, Const.CAR_ROLE, msgToCar);
+									carsInCrossing.remove(carId);
+								}
 							}
-							else if (crossPassed(carPos,cross)) {
-								StringMessage msgToCar = new StringMessage("changedCrossingStatus:false:" + carId);
-								sendMessage(Const.MY_COMMUNITY, carGroup, Const.CAR_ROLE, msgToCar);
+							else {
+								if(Functions.manhattan(carPos,cross) < beaconRange && Functions.isBefore(carPos, cross)){
+									StringMessage msgToCar = new StringMessage("changedCrossingStatus:true:" + carId);
+									sendMessage(Const.MY_COMMUNITY, carGroup, Const.CAR_ROLE, msgToCar);
+									carsInCrossing.add(carId);
+								}
 							}
 						}
 						
@@ -276,6 +284,7 @@ public class Environment extends Agent{
 							map.put(cross,groups);
 							StringMessage msgToCar = new StringMessage("changedCrossingStatus:true:" + carId);
 							sendMessage(Const.MY_COMMUNITY, carGroup, Const.CAR_ROLE, msgToCar);
+							carsInCrossing.add(carId);
 						}
 					}
 				}
