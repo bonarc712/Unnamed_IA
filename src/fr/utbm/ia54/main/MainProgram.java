@@ -17,7 +17,7 @@ import madkit.kernel.Agent;
  * Main class.
  * @author Alexis Florian
  */
-public class MainProgram extends Agent{
+public class MainProgram extends Agent {
 	
 	private static MainFrame mainFrame;
 	private static CarPath carPath;
@@ -35,7 +35,7 @@ public class MainProgram extends Agent{
 		
 		/* Build the path to follow by each train */
 		ReadXmlFile read = new ReadXmlFile();		
-		carPath.setPath(read.parse(new File(Const.RESOURCES_DIR+"/circuit4.xml")));
+		carPath.setPath(read.parse(new File(Const.RESOURCES_DIR+"/circuit8.xml")));
 		Const.NB_TRAIN = carPath.getPath().size();
 		carPath.generateCrossing();
 		
@@ -80,9 +80,6 @@ public class MainProgram extends Agent{
 
 	@Override
     protected void live() {
-		for(int i = 0; i<1 ; i++) {
-			pause(5000);
-		}
 	}
 	
 	@Override

@@ -99,6 +99,7 @@ public class Car extends AbstractAgent {
 		carPath = MainProgram.getCarPath();
 		numTrain = getNumTrain(group);
 		
+		// Old spawn
 		//pos = carPath.getStart(numTrain);
 		
 		// Set car position regarding it's order in train
@@ -156,7 +157,7 @@ public class Car extends AbstractAgent {
 		printings += "Speed to reach is " + vToReach + ", and safeD is " + safeD + "\n";
 		
 		
-/*OPTIMAL SITUATION ***************************************************/
+		/*OPTIMAL SITUATION ***************************************************/
 		// adapt speed according to speed objectives and ACC-eleration and DECC-eleration
 		if(pos.getSpeed() == vToReach) {
 			newV = (float) pos.getSpeed();
@@ -184,13 +185,13 @@ public class Car extends AbstractAgent {
 		printings += "Actual speed : "+ pos.speed + "\n";
 		printings += "Optimal situation\nnewV = " + newV + "\n";
 		
-/* BACK TO REALITY ****************************************/
+		/* BACK TO REALITY ****************************************/
 		neighbours = inRange(tmpPos, seeD, null);
 		tmpKnownCars.putAll(neighbours);
 		
 		if(neighbours != null && !neighbours.isEmpty()) {
 							
-/* EMERGENCIES **********************************************************/
+			/* EMERGENCIES **********************************************************/
 			emergencies = inRange(tmpPos, safeD, neighbours);
 			crossings = carPath.getCrossingNear(tmpPos, seeD);
 			
@@ -251,8 +252,8 @@ public class Car extends AbstractAgent {
 				printings += "Emergencies : on essaie de s'arreter tant bien que mal.\n"; 
 			} 
 			else {
-/* NOT MEMERGENCIES, BUT WATCHLIST **********************************/
-			//TODO multi(>2) trains, not operationnal at ALL for that. 
+				/* NOT MEMERGENCIES, BUT WATCHLIST **********************************/
+				//TODO multi(>2) trains, not operationnal at ALL for that. 
 
 				printings += "No emergencies, we go for neighbors.\n"; 
 				
@@ -396,7 +397,7 @@ public class Car extends AbstractAgent {
 				knownCars = tmpKnownCars;				
 			}//no emergencies
 		}//no neighbours
-/* APPLICATION OF WHAT IS PLANNED ********************/
+		/* APPLICATION OF WHAT IS PLANNED ********************/
 		executingRun(newV, toSlowV, distance, tmpPos);
 		//pause(Const.PAS);
 		
